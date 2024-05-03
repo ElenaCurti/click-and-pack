@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+    <TextView
+        android:id="@+id/textView_main_item"
+
+        android:text="main item"
+        android:textSize="20dp"
+        android:textStyle="bold"
+
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+
+        android:padding="10dp"
+
+        android:layout_marginTop="10dp"
+        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton_visualizza"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/textView_sub_item"
+
+        android:text="sub item"
+        android:textSize="18dp"
+
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="5dp"
+        app:layout_constraintEnd_toEndOf="@+id/textView_main_item"
+        app:layout_constraintStart_toStartOf="@+id/textView_main_item"
+        app:layout_constraintTop_toBottomOf="@+id/textView_main_item" />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floatingActionButton_visualizza"
+        app:srcCompat="@android:drawable/ic_menu_view"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_marginStart="10dp"
+
+        app:layout_constraintBottom_toBottomOf="@+id/textView_sub_item"
+        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton_modifica"
+        app:layout_constraintStart_toEndOf="@+id/textView_main_item"
+        app:layout_constraintTop_toTopOf="@+id/textView_main_item"
+        />
+
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/floatingActionButton_modifica"
+
+        app:srcCompat="@android:drawable/ic_menu_edit"
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+
+        android:layout_marginStart="10dp"
+        android:layout_marginEnd="10dp"
+        app:layout_constraintBottom_toBottomOf="@+id/textView_sub_item"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/floatingActionButton_visualizza"
+        app:layout_constraintTop_toTopOf="@+id/textView_main_item"
+        />
+
+    <!--        android:layout_weight="1"
+    android:clickable="true" -->
+</androidx.constraintlayout.widget.ConstraintLayout>
