@@ -16,7 +16,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="20dp"
         android:ems="10"
         android:hint="List name"
@@ -29,7 +29,7 @@
         android:id="@+id/editTextText_listDescription"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:ems="10"
         android:hint="List description"
         android:inputType="text"
@@ -37,8 +37,9 @@
         app:layout_constraintStart_toStartOf="@+id/editText_listName"
         app:layout_constraintTop_toBottomOf="@+id/editText_listName" />
 
-    <Spinner
+<!--    <Spinner
         android:id="@+id/spinner_itemsName"
+
 
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -47,11 +48,37 @@
         app:layout_constraintEnd_toStartOf="@+id/floatingActionButton_itemAdd"
         app:layout_constraintStart_toStartOf="@+id/editTextText_listDescription"
         app:layout_constraintTop_toTopOf="@+id/floatingActionButton_itemAdd" />
+-->
+
+    <ListView
+        android:id="@+id/listView_itemsRemove"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        app:layout_constraintBottom_toTopOf="@+id/button_deleteList"
+        app:layout_constraintEnd_toEndOf="@+id/floatingActionButton_itemAdd"
+        app:layout_constraintStart_toStartOf="@+id/editText_listName"
+        app:layout_constraintTop_toBottomOf="@+id/floatingActionButton_itemAdd" />
+
+    <!--  -->
+
+    <ListView
+        android:id="@+id/listViewResults"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:nestedScrollingEnabled="true"
+        app:layout_constraintHeight_max="350dp"
+        app:layout_constraintEnd_toEndOf="@+id/editTextText_newItemName"
+        app:layout_constraintStart_toStartOf="@+id/editTextText_newItemName"
+        app:layout_constraintTop_toBottomOf="@+id/editTextText_newItemName" />
+
+
 
     <EditText
         android:id="@+id/editTextText_newItemName"
         android:inputType="text"
-        android:visibility="invisible"
+        android:visibility="visible"
         android:hint="New item name"
         android:layout_width="0dp"
         android:layout_height="0dp"
@@ -65,23 +92,13 @@
         android:id="@+id/floatingActionButton_itemAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        app:fabCustomSize="40dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:clickable="true"
+        app:fabCustomSize="40dp"
         app:layout_constraintEnd_toEndOf="@+id/editTextText_listDescription"
         app:layout_constraintTop_toBottomOf="@+id/editTextText_listDescription"
         app:srcCompat="@android:drawable/ic_input_add" />
 
-    <ListView
-        android:id="@+id/listView_itemsRemove"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        app:layout_constraintBottom_toTopOf="@+id/button_deleteList"
-        app:layout_constraintEnd_toEndOf="@+id/floatingActionButton_itemAdd"
-        app:layout_constraintStart_toStartOf="@+id/spinner_itemsName"
-        app:layout_constraintTop_toBottomOf="@+id/spinner_itemsName" />
 
     <Button
         android:id="@+id/button_deleteList"
@@ -117,6 +134,7 @@
         app:layout_constraintEnd_toEndOf="@+id/listView_itemsRemove"
         app:layout_constraintStart_toEndOf="@+id/button_cancelChanges"
         app:layout_constraintTop_toTopOf="@+id/button_cancelChanges" />
+
 
 
 

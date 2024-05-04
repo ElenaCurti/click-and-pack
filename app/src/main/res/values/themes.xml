@@ -2,7 +2,8 @@
     <!-- Base application theme. -->
     <style name="Base.Theme.ClickAndPack" parent="Theme.Material3.DayNight.NoActionBar">
         <!-- Customize your light theme here. -->
-        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!--  <item name="colorPrimary">#ff00ff</item> -->
+         <!-- <item name="android:windowBackground"></item> -->
     </style>
 
     <style name="Theme.ClickAndPack" parent="Base.Theme.ClickAndPack" />
