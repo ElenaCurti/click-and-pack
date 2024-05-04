@@ -2,6 +2,9 @@ package com.example.clickandpack;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
@@ -22,6 +25,7 @@ import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
+import java.nio.charset.MalformedInputException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,25 +41,56 @@ public class AddOrModifyList extends AppCompatActivity {
         setContentView(R.layout.activity_add_or_modify_list);
 
         Intent i = getIntent();
-        String ops = i.getStringExtra("action");
+        String operation = i.getStringExtra(MainActivity.OPERATION_NAME);
 
-        setViewItems();
+
+        setViewItems(operation);
+
+        // TODO se lista viene creata togli button "delete list"
+
+        findViewById(R.id.button_deleteList).setOnClickListener(v -> {
+            new AlertDialog.Builder(this)
+                    .setTitle(getString(R.string.delete_list_title))
+                    .setMessage(getString(R.string.delete_list_message))
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
+
+                        public void onClick(DialogInterface dialog, int whichButton) {
+                            // TODO User really wants to delete list
+                            Toast.makeText(getApplicationContext(), "User really wants to delete list", Toast.LENGTH_SHORT).show();
+                            finish();
+                        }})
+                    .setNegativeButton(android.R.string.cancel, null).show();
+
+        });
 
     }
 
-    private void setViewItems(){
+    private void setViewItems(String operation){
         // Sample list of items
         List<String> itemList = new ArrayList<>();
-        itemList.add("T-Shirts");
-        itemList.add("Swimsuit");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
-        itemList.add("Flip-flops");
+        if (operation.equals(MainActivity.OPERATION_ADD_LIST)) {
+            findViewById(R.id.button_deleteList).setVisibility(View.GONE);
+
+        } else {
+            // TODO prendi numero lista e setta tutti i campi
+            itemList.add("T-Shirts");
+            itemList.add("Swimsuit");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");
+        }
+
+        if (itemList.isEmpty()) {
+            findViewById(R.id.textView_emptyList).setVisibility(View.VISIBLE);
+        }
+
+        EditText editTextSearch = findViewById(R.id.editTextText_newItemName);
 
         ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.item_lista_da_rimuovere, itemList) {
             @Override
@@ -75,10 +110,19 @@ public class AddOrModifyList extends AppCompatActivity {
 
                 FloatingActionButton buttonRemove = (FloatingActionButton) view.findViewById(R.id.floatingActionButton_removeItem);
 
+
                 buttonRemove.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
                         FloatingActionButton pressedButton = (FloatingActionButton) view;
+                        itemList.remove(position);
+
+                        if (itemList.isEmpty()){
+                            findViewById(R.id.textView_emptyList).setVisibility(View.VISIBLE);
+                        }
+
+                        notifyDataSetChanged(); // Notify the adapter that the dataset has changed
+
                         Toast.makeText(getApplicationContext(), "Posizione: " + position + "  Tipo: rimuovi" , Toast.LENGTH_SHORT).show();
                     }
                 });
@@ -92,62 +136,9 @@ public class AddOrModifyList extends AppCompatActivity {
         ListView listView = findViewById(R.id.listView_itemsRemove);
         listView.setAdapter(adapter);
 
-
-        /* // Metodo 1 con spinner
-        EditText newItemName = (EditText) findViewById(R.id.editTextText_newItemName);
-        Spinner itemsSpinner = (Spinner) findViewById(R.id.spinner_itemsName);
-        ArrayAdapter<CharSequence> adapterItemsSpinner = new ArrayAdapter<>(this, R.layout.simple_list_item_1, itemsNames);
-        adapterItemsSpinner.setDropDownViewResource(android.R.layout.simple_list_item_1);
-        itemsSpinner.setAdapter(adapterItemsSpinner);
-        itemsSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                //((TextView) view).setTextSize(50);
-                //Log.d(TAG_LOGGER,((TextView) view).getText().toString() );
-
-                if ( position == itemsNames.length - 1 ) {
-                    // Last item selected
-                    //findViewById(R.id.editTextText_newItemName).setVisibility(View.VISIBLE);
-                    newItemName.setVisibility(View.VISIBLE);
-                    itemsSpinner.setVisibility(View.GONE);
-                    Toast.makeText(getApplicationContext(), "Last item " + itemsNames[position] + " Selected..", Toast.LENGTH_SHORT).show();
-
-
-                } else
-                    Toast.makeText(getApplicationContext(), "" + itemsNames[position] + " Selected..", Toast.LENGTH_SHORT).show();
-            }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-            }
-        });
-        itemsSpinner.setSelection(adapter.getPosition( itemsNames[0]));
-
-        newItemName.setOnFocusChangeListener(new View.OnFocusChangeListener() {
-            @Override
-            public void onFocusChange(View v, boolean hasFocus) {
-                if (!hasFocus) {
-                    String testo = newItemName.getText().toString();
-                    if ( testo.equals("") ) {
-                        Log.d(TAG_LOGGER + "_testo", "TESTO VUOTO");
-                        newItemName.setVisibility(View.GONE);
-                        itemsSpinner.setVisibility(View.VISIBLE);
-                    }
-
-                    Log.d(TAG_LOGGER + "_testo", "Testo: " + testo);
-
-                }
-
-                Log.d(TAG_LOGGER + "_focus", "Focus: " + hasFocus);
-            }
-        }); */
-
-
-        EditText editTextSearch = findViewById(R.id.editTextText_newItemName);
         ListView listViewResults = findViewById(R.id.listViewResults);
 
-        // Dummy data for demonstration
+        // Dummy data for demonstration TODO prendere da lista di items
         List<String> allItems = new ArrayList<>();
         allItems.add("Apple");
         allItems.add("Banana");
@@ -158,11 +149,12 @@ public class AddOrModifyList extends AppCompatActivity {
         allItems.add("Grapes");
         allItems.add("Grapes");
         allItems.add("Grapes");
-        allItems.add("Grapes");
+        allItems.add("");
 
-        // Adapter for the ListView
+        // Adapter for the ListView of the search bar
         final ArrayAdapter<String> adapter2 = new ArrayAdapter<>(this,
                 R.layout.item_search_prova, new ArrayList<String>());
+
         listViewResults.setAdapter(adapter2);
 
         // EditText text change listener for searching
@@ -175,11 +167,18 @@ public class AddOrModifyList extends AppCompatActivity {
                 // Filter the items based on the search text
                 listViewResults.setVisibility(View.VISIBLE);
                 adapter2.clear();
+
                 for (String item : allItems) {
                     if (item.toLowerCase().contains(s.toString().toLowerCase())) {
                         adapter2.add(item);
                     }
                 }
+
+                //if (adapter2.isEmpty()) {
+                    String currentSearchedText = editTextSearch.getText().toString();
+                    allItems.set(allItems.size()-1, currentSearchedText);
+                    adapter2.add(currentSearchedText);
+                //}
             }
 
             @Override
@@ -200,7 +199,11 @@ public class AddOrModifyList extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = (String) parent.getItemAtPosition(position);
                 // Show a toast with the selected item
-                Toast.makeText(getApplicationContext(), "Selected: " + selectedItem, Toast.LENGTH_SHORT).show();
+                itemList.add(0, selectedItem);
+                findViewById(R.id.textView_emptyList).setVisibility(View.GONE);
+                adapter.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
+                listViewResults.setVisibility(View.GONE);
+                //Toast.makeText(getApplicationContext(), "Selected: " + selectedItem, Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -208,16 +211,48 @@ public class AddOrModifyList extends AppCompatActivity {
 
 
 
+
+
     }
 
+    @SuppressLint("MissingSuperCall")
+    @Override
+    public void onBackPressed() {
+
+        new AlertDialog.Builder(this)
+                .setTitle(getString(R.string.save_changes_title))
+                .setMessage(getString(R.string.save_changes_message))
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .setPositiveButton(R.string.yes, new DialogInterface.OnClickListener() {
+
+                    public void onClick(DialogInterface dialog, int whichButton) {
+                        // User wants to save changes
+                        Toast.makeText(getApplicationContext(), "User wants to save changes", Toast.LENGTH_SHORT).show();
+                        finish();
+                    }
+                })
+                .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
+
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+
+                    }
+                })
+                .setNeutralButton(android.R.string.cancel, null).show();
 
 
+    }
 
     @Override
     public void finish(){
+
+
         Intent i = new Intent();
         i.putExtra("CodRisposta","Addio!");
         setResult(RESULT_OK, i);
         super.finish();
+
+
     }
 }

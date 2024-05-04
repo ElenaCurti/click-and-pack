@@ -23,6 +23,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_CODE_ADD_LIST = 1;
     private static final String TAG_LOGGER = "MyTag_MainActivity";
 
+    public static final String OPERATION_NAME = "action";
+    public static final String OPERATION_ADD_LIST = "add_list";
+    public static final String OPERATION_MODIFY_LIST = "modify_list";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,12 +35,14 @@ public class MainActivity extends AppCompatActivity {
         populateListsCollection();
 
         FloatingActionButton buttonAddList = (FloatingActionButton) findViewById(R.id.floatingActionButton_aggiungi);
+
+
         buttonAddList.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 /* User wants to add a new list */
                 Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
-                i.putExtra("action", "add_list");
+                i.putExtra(OPERATION_NAME, OPERATION_ADD_LIST);
                 startActivityForResult(i,REQUEST_CODE_ADD_LIST);
             }
         });
@@ -96,8 +102,12 @@ public class MainActivity extends AppCompatActivity {
                         String tipoButton = "";
                         if ( pressedButton == buttonVisualizza )
                             tipoButton = "visualizza";
-                        else if ( pressedButton == buttonModifica )
+                        else if ( pressedButton == buttonModifica ) {
                             tipoButton = "modifica";
+                            Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
+                            i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST + " " + position);
+                            startActivityForResult(i,REQUEST_CODE_ADD_LIST);
+                        }
                         Toast.makeText(getApplicationContext(), "Posizione: " + position + "  Tipo: " + tipoButton , Toast.LENGTH_SHORT).show();
                     }
                 };

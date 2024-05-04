@@ -26,9 +26,9 @@
         android:padding="10dp"
         android:text="nome item"
         android:textSize="18sp"
-        app:layout_constraintBottom_toBottomOf="@+id/floatingActionButton_removeItem"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/floatingActionButton_removeItem"
-        app:layout_constraintTop_toTopOf="@+id/floatingActionButton_removeItem" />
+         />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>
