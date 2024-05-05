@@ -1,6 +1,7 @@
 package com.example.clickandpack;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -15,26 +16,27 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
 import android.widget.EditText;
-import android.widget.LinearLayout;
 import android.widget.ListView;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
-import java.nio.charset.MalformedInputException;
 import java.util.ArrayList;
 import java.util.List;
 
+import database_handler.AppDatabase;
+import database_handler.ItemEntity;
+import database_handler.ItemsInList;
+import database_handler.ListEntity;
 
 
 public class AddOrModifyList extends AppCompatActivity {
     private static final String TAG_LOGGER = "MyTag_AddOrModifyList";
     private String[] itemsNames = {"Select item...", "Elemento 1", "Elemento 2", "Elemento 3", "Elemento 4", "Other"};
 
+    private ListEntity listEntity = null ;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,9 +46,15 @@ public class AddOrModifyList extends AppCompatActivity {
         String operation = i.getStringExtra(MainActivity.OPERATION_NAME);
 
 
-        setViewItems(operation);
+        //setViewItems(operation);
+        Thread t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                getListInDb(operation);
+            }
+        });
 
-        // TODO se lista viene creata togli button "delete list"
+        t.start();
 
         findViewById(R.id.button_deleteList).setOnClickListener(v -> {
             new AlertDialog.Builder(this)
@@ -66,6 +74,24 @@ public class AddOrModifyList extends AppCompatActivity {
 
     }
 
+    private void getListInDb(String operation){
+        if (operation.startsWith(MainActivity.OPERATION_MODIFY_LIST)) {
+            AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-database").build();
+            long idList = Long.parseLong( ( (String[]) operation.split(" ") )[1]);
+            listEntity = appDatabase.listDao().getListFromId(idList);
+            listEntity.itemsInList = appDatabase.itemsInListDao().getItemsInList(idList);
+            Log.d(TAG_LOGGER + "_db", "Size get: " + appDatabase.itemsInListDao().getItemsInList(idList).size());
+
+            for (ItemsInList il: appDatabase.itemsInListDao().getAllItemsInLists() ) {
+                Log.d(TAG_LOGGER + "_db", "Item in list: " + il.toString());
+
+            }
+        }
+
+        setViewItems(operation);
+    }
+
+
     private void setViewItems(String operation){
         // Sample list of items
         List<String> itemList = new ArrayList<>();
@@ -74,8 +100,18 @@ public class AddOrModifyList extends AppCompatActivity {
 
         } else {
             // TODO prendi numero lista e setta tutti i campi
-            itemList.add("T-Shirts");
-            itemList.add("Swimsuit");
+            ((EditText) findViewById(R.id.editText_listName)).setText(listEntity.getName());
+            ((EditText) findViewById(R.id.editText_listDescription)).setText(listEntity.getDescription());
+
+            if ( listEntity.itemsInList != null ) {
+                Log.d(TAG_LOGGER + "_db", "Size: " + listEntity.itemsInList.size());
+                for (ItemEntity ie : listEntity.itemsInList) {
+                    itemList.add(ie.getName());
+                    Log.d(TAG_LOGGER + "_db", ie.getName());
+                }
+            }
+//            itemList = listEntity.itemsInList
+            /*itemList.add("Swimsuit");
             itemList.add("Flip-flops");
             itemList.add("Flip-flops");
             itemList.add("Flip-flops");
@@ -83,7 +119,7 @@ public class AddOrModifyList extends AppCompatActivity {
             itemList.add("Flip-flops");
             itemList.add("Flip-flops");
             itemList.add("Flip-flops");
-            itemList.add("Flip-flops");
+            itemList.add("Flip-flops");*/
         }
 
         if (itemList.isEmpty()) {

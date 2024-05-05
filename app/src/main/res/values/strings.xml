@@ -1,15 +1,25 @@
 <resources>
     <string name="app_name">Click And Pack</string>
+
+    <!-- String used in the confirmation box and in the AddOrModifyList view -->
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="delete_list_message">Do you really want to permanently delete this list?</string>
+    <string name="save_changes_message">Do you want to save changes before leaving?</string>
+
+    <!-- Placeholder/Hint for the AddOrModifyList view -->
+    <string name="list_name_placeholder">List name</string>
+    <string name="list_description_placeholder">List description</string>
+    <string name="new_item_name_placeholder">New item name</string>
 
     <string name="empty_list">List is empty. Add an item by searching its name.</string>
     <string name="delete_list_title">Delete list</string>
-    <string name="delete_list_message">Do you really want to permanently delete this list?</string>
-
     <string name="cancel_changes">Cancel changes</string>
     <string name="save_changes_title">Save changes</string>
-    <string name="save_changes_message">Do you want to save changes before leaving?</string>
+
+    <!-- Errors -->
+    <string name="error_creating_new_list">There was an error during the creation of a new list!</string>
+
 
 
 </resources>
