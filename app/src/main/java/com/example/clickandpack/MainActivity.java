@@ -1,9 +1,10 @@
 package com.example.clickandpack;
 
+import static database_handler.AppDatabase.DB_NAME;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
-import android.app.LauncherActivity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -20,24 +21,29 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import database_handler.AppDatabase;
 import database_handler.ItemEntity;
 import database_handler.ItemsInList;
 import database_handler.ListEntity;
-import database_handler.ListDAO;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_CODE_ADD_LIST = 1;
+    private static final int REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2;
     private static final String TAG_LOGGER = "MyTag_MainActivity";
 
     public static final String OPERATION_NAME = "action";
     public static final String OPERATION_ADD_LIST = "add_list";
     public static final String OPERATION_MODIFY_LIST = "modify_list";
 
+    public static final String RESPONSE_KEY = "response";
+
+    private ArrayAdapter<String> adapterListe;
+
+
     private AppDatabase appDatabase;
+
+    private List<ListEntity> userLists;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -59,22 +65,65 @@ public class MainActivity extends AppCompatActivity {
         });
 
 
+        readAndShowUserLists();
+    }
+
+    private void readAndShowUserLists(){
+
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                creazioneEdUsoContentPersonalizzato(true);
+                //creazioneEdUsoContentPersonalizzato(true);
+                readUserLists();
+                //populateListsCollection();
             }
         });
 
         t.start();
 
+        try {
+            t.join(); // Wait for the background thread to finish
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        // Execute populateListsCollection() on the main thread
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                populateListsCollection();
+            }
+        });
+
+
+    }
+
+    private void initializeAppDatabase(){
+        if (appDatabase  == null )
+            appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
+    }
+
+    private void readUserLists() {
+
+        initializeAppDatabase();
+
+        userLists = appDatabase.listDao().getAllLists();
+        if (userLists == null ) {
+            Log.d(TAG_LOGGER + "_db", "user lists is null");
+        } else  {
+            Log.d(TAG_LOGGER + "_db", "user lists is NOT null");
+            for(ListEntity le: userLists)
+                Log.d(TAG_LOGGER + "_db", "lista: " + le.toString());
+
+        }
 
 
     }
 
     private void creazioneEdUsoContentPersonalizzato(boolean resetAllaFine){
-        appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-database").build();
+
+        initializeAppDatabase();
 
         appDatabase.listDao().deleteAllLists();
         appDatabase.itemDao().deleteAllItems();
@@ -121,28 +170,40 @@ public class MainActivity extends AppCompatActivity {
         itemsInList4.itemId = item3.getId();
         itemsInList4.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList4);
 
-        populateListsCollection();
+
 
     }
+
+
 
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            readAndShowUserLists();
+            return;
+        }
+
+        // String risposta = data.getExtras().getString(RESPONSE_KEY);
+        // Toast.makeText(this, "Risposta: " + risposta, Toast.LENGTH_LONG).show();
         if (requestCode == REQUEST_CODE_ADD_LIST) {
-            // User has comed back from the "add list" view. I check if the result is ok or not.
-            if (resultCode == RESULT_OK) {
-                String risposta = data.getExtras().getString("CodRisposta");
-                Toast.makeText(this, "Risposta: " + risposta, Toast.LENGTH_LONG).show();
-            } else {
-                Toast.makeText(this, getString(R.string.error_creating_new_list), Toast.LENGTH_LONG).show();
-            }
+
+            Toast.makeText(this, getString(R.string.error_creating_new_list), Toast.LENGTH_LONG).show();
+
+        } else if (requestCode == REQUEST_CODE_MODIFY_LIST) {
+            Toast.makeText(this, getString(R.string.error_modifying_list), Toast.LENGTH_LONG).show();
+
         }
     }
 
     private void populateListsCollection() {
+        if (userLists == null || userLists.size() == 0){
+            // TODO. inserire text view
+            return;
+        }
 
-        List<ListEntity> userLists = appDatabase.listDao().getAllLists();
+
         Log.d(MainActivity.TAG_LOGGER+"_nl_", "Numero liste: " + userLists.size());
 
         /*for (ListEntity lista: userLists) {
@@ -163,7 +224,7 @@ public class MainActivity extends AppCompatActivity {
 
         // TODO se #liste ==0 aggiungi textview del tipo "schiaccia + per aggiungere lista"
         /* Create an adapter and assign it to the ListView */
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.elenco_liste_prima_videata, fixedSizeList) {
+        adapterListe = new ArrayAdapter<String>(this, R.layout.elenco_liste_prima_videata, fixedSizeList) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = convertView;
@@ -197,7 +258,7 @@ public class MainActivity extends AppCompatActivity {
                             tipoButton = "modifica";
                             Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
                             i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST + " " + id);
-                            startActivityForResult(i,REQUEST_CODE_ADD_LIST);
+                            startActivityForResult(i,REQUEST_CODE_MODIFY_LIST);
                         }
                         Toast.makeText(getApplicationContext(), "Id: " + id + "  Tipo: " + tipoButton , Toast.LENGTH_SHORT).show();
                     }
@@ -212,7 +273,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         ListView listView = findViewById(R.id.listView_liste);
-        listView.setAdapter(adapter);
+        listView.setAdapter(adapterListe);
     }
 
 }

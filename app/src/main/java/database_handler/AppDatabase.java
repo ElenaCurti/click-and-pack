@@ -4,6 +4,8 @@ import androidx.room.RoomDatabase;
 
 @Database(entities = {ListEntity.class, ItemEntity.class, ItemsInList.class}, version = 1)
 public abstract class AppDatabase extends RoomDatabase {
+
+    public static final String DB_NAME = "app-database";
     public abstract ListDAO listDao();
     public abstract ItemDAO itemDao();
 

@@ -25,6 +25,13 @@ public interface ListDAO {
     @Query("SELECT * FROM lists WHERE id=:searchedId")
     ListEntity getListFromId(long searchedId);
 
+    @Query("UPDATE lists SET name = :newName, description = :newDescription WHERE id = :listId")
+    void updateListNameAndDescription(long listId, String newName, String newDescription);
+
+
+    @Query("DELETE FROM lists WHERE id = :listId")
+    void deleteListById(long listId);
+
 
 
     /*

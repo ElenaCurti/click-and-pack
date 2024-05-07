@@ -1,5 +1,7 @@
 package com.example.clickandpack;
 
+import static database_handler.AppDatabase.DB_NAME;
+
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
@@ -11,6 +13,7 @@ import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -36,7 +39,14 @@ public class AddOrModifyList extends AppCompatActivity {
     private static final String TAG_LOGGER = "MyTag_AddOrModifyList";
     private String[] itemsNames = {"Select item...", "Elemento 1", "Elemento 2", "Elemento 3", "Elemento 4", "Other"};
 
-    private ListEntity listEntity = null ;
+    private static final String ID_AND_NAME_SEPERATOR = ")";
+    private ListEntity listEntity = null;
+    private List<ItemEntity> itemsEntity = null;
+
+    private  List<String> itemList = new ArrayList<>();
+
+    private AppDatabase appDatabase;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -64,7 +74,14 @@ public class AddOrModifyList extends AppCompatActivity {
                     .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
 
                         public void onClick(DialogInterface dialog, int whichButton) {
-                            // TODO User really wants to delete list
+                            Thread t = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    appDatabase.listDao().deleteListById(listEntity.id);
+                                }
+                            });
+
+                            t.start();
                             Toast.makeText(getApplicationContext(), "User really wants to delete list", Toast.LENGTH_SHORT).show();
                             finish();
                         }})
@@ -72,11 +89,21 @@ public class AddOrModifyList extends AppCompatActivity {
 
         });
 
+        findViewById(R.id.button_saveChanges).setOnClickListener(view -> saveChangesAndFinish());
+
     }
 
+
+    private void initializeAppDatabase(){
+        if (appDatabase == null)
+            appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
+    }
+
+
+
     private void getListInDb(String operation){
+        initializeAppDatabase();
         if (operation.startsWith(MainActivity.OPERATION_MODIFY_LIST)) {
-            AppDatabase appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, "app-database").build();
             long idList = Long.parseLong( ( (String[]) operation.split(" ") )[1]);
             listEntity = appDatabase.listDao().getListFromId(idList);
             listEntity.itemsInList = appDatabase.itemsInListDao().getItemsInList(idList);
@@ -86,15 +113,31 @@ public class AddOrModifyList extends AppCompatActivity {
                 Log.d(TAG_LOGGER + "_db", "Item in list: " + il.toString());
 
             }
+
+
+
+        }
+
+        itemsEntity = appDatabase.itemDao().getAllDetectableItems();
+        if (itemsEntity == null)
+            Log.d(TAG_LOGGER + "_db", "itemsEntity is null");
+        else {
+            Log.d(TAG_LOGGER + "_db", "itemsEntity is NOT null");
+            for(ItemEntity ie : itemsEntity){
+                Log.d(TAG_LOGGER + "_db", "itemsEntity: " + ie.toString());
+
+            }
         }
 
         setViewItems(operation);
+
+
     }
 
 
     private void setViewItems(String operation){
         // Sample list of items
-        List<String> itemList = new ArrayList<>();
+
         if (operation.equals(MainActivity.OPERATION_ADD_LIST)) {
             findViewById(R.id.button_deleteList).setVisibility(View.GONE);
 
@@ -106,7 +149,7 @@ public class AddOrModifyList extends AppCompatActivity {
             if ( listEntity.itemsInList != null ) {
                 Log.d(TAG_LOGGER + "_db", "Size: " + listEntity.itemsInList.size());
                 for (ItemEntity ie : listEntity.itemsInList) {
-                    itemList.add(ie.getName());
+                    itemList.add(ie.getId() + ID_AND_NAME_SEPERATOR + ie.getName());
                     Log.d(TAG_LOGGER + "_db", ie.getName());
                 }
             }
@@ -140,9 +183,12 @@ public class AddOrModifyList extends AppCompatActivity {
                 }
                 Log.d(TAG_LOGGER, "view at position " + position + " is NOT null");
 
-                TextView itemName = view.findViewById(R.id.textView_itemName);
 
-                itemName.setText(itemList.get(position));
+                int index = itemList.get(position).indexOf(ID_AND_NAME_SEPERATOR);
+                String justText = itemList.get(position).substring(index+1);
+
+                TextView itemName = view.findViewById(R.id.textView_itemName);
+                itemName.setText(justText);
 
                 FloatingActionButton buttonRemove = (FloatingActionButton) view.findViewById(R.id.floatingActionButton_removeItem);
 
@@ -175,7 +221,7 @@ public class AddOrModifyList extends AppCompatActivity {
         ListView listViewResults = findViewById(R.id.listViewResults);
 
         // Dummy data for demonstration TODO prendere da lista di items
-        List<String> allItems = new ArrayList<>();
+        /*List<String> allItems = new ArrayList<>();
         allItems.add("Apple");
         allItems.add("Banana");
         allItems.add("Orange");
@@ -185,12 +231,43 @@ public class AddOrModifyList extends AppCompatActivity {
         allItems.add("Grapes");
         allItems.add("Grapes");
         allItems.add("Grapes");
-        allItems.add("");
+        allItems.add("");*/
 
+        final ItemsArrayAdapter adapter2 = new ItemsArrayAdapter(this, R.layout.item_search_prova, new ArrayList<String>());
+        /*
+
+        List<String> fixedSizeList = new ArrayList<>(Collections.nCopies(itemsEntity.size() + 1, "a"));
         // Adapter for the ListView of the search bar
-        final ArrayAdapter<String> adapter2 = new ArrayAdapter<>(this,
-                R.layout.item_search_prova, new ArrayList<String>());
+        final ArrayAdapter<String> adapter2 = new ArrayAdapter<String>(this, R.layout.item_search_prova, fixedSizeList) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = convertView;
 
+                if (view == null) {
+                    Log.d(TAG_LOGGER + "_item", "item view at position " + position + " is null");
+                    LayoutInflater inflater = LayoutInflater.from(getContext());
+                    view = inflater.inflate(R.layout.item_search_prova, parent, false);
+                }
+                Log.d(TAG_LOGGER+ "_item", "item view at position " + position + " is NOT null");
+
+                TextView itemName = view.findViewById(R.id.textView_detectableItemName);
+                if (position  == itemsEntity.size() ){
+                    // Last element will contain user text
+                    itemName.setText("...");
+                    itemName.setHint("-1");
+                }
+                else {
+                    // Other elements will contain detectable items
+                    itemName.setText(itemsEntity.get(position).getName());
+                    itemName.setHint("" + itemsEntity.get(position).getId());
+                }
+                Log.d(TAG_LOGGER+ "_item", "setted text at position " + position + " with text " + itemName.getText().toString());
+
+                //itemName.setText(itemsEntity.get(position).getName());
+
+                return view;
+            }
+        };*/
         listViewResults.setAdapter(adapter2);
 
         // EditText text change listener for searching
@@ -204,22 +281,30 @@ public class AddOrModifyList extends AppCompatActivity {
                 listViewResults.setVisibility(View.VISIBLE);
                 adapter2.clear();
 
-                for (String item : allItems) {
-                    if (item.toLowerCase().contains(s.toString().toLowerCase())) {
-                        adapter2.add(item);
+                if (itemsEntity != null ) {
+                    for (ItemEntity itemEntity : itemsEntity) {
+
+
+                        String item_name = itemEntity.getName();
+                        long item_id = itemEntity.getId();
+                        if (item_name.toLowerCase().contains(s.toString().toLowerCase())) {
+                            adapter2.add(item_id, item_name);
+                        }
                     }
                 }
-
                 //if (adapter2.isEmpty()) {
                     String currentSearchedText = editTextSearch.getText().toString();
-                    allItems.set(allItems.size()-1, currentSearchedText);
-                    adapter2.add(currentSearchedText);
-                //}
+                    //allItems.set(allItems.size()-1, currentSearchedText);
+                    if (!currentSearchedText.equals(""))
+                        adapter2.add(-1, currentSearchedText);
+
+                //}*/
             }
 
             @Override
             public void afterTextChanged(Editable s) {}
         });
+
 
         editTextSearch.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
@@ -229,13 +314,24 @@ public class AddOrModifyList extends AppCompatActivity {
             }
         });
 
+
+
         // ListView item click listener
         listViewResults.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 String selectedItem = (String) parent.getItemAtPosition(position);
+
+
+
+                Pair<Long, String> pair = adapter2.getIdAndName(position);
+                long idItem = pair.first;
+                String name = pair.second;
+
+
+                Log.d("TAG", "Item cliccato ha testo: " + selectedItem  + ". nell array adapert e: " + idItem + " " + name);
                 // Show a toast with the selected item
-                itemList.add(0, selectedItem);
+                itemList.add(0, idItem + ID_AND_NAME_SEPERATOR + name);
                 findViewById(R.id.textView_emptyList).setVisibility(View.GONE);
                 adapter.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
                 listViewResults.setVisibility(View.GONE);
@@ -243,13 +339,70 @@ public class AddOrModifyList extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void saveChangesAndFinish(){
+        Thread threadUpdate = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                initializeAppDatabase();
+                String newName = ((TextView) findViewById(R.id.editText_listName)).getText().toString();
+                String newdescription = ((TextView) findViewById(R.id.editText_listDescription)).getText().toString();
+
+                Log.d("SAVE_CHANGES", "sono qui");
+                if (listEntity == null) {
+                    // User wants to create a new list
+                    listEntity = new ListEntity(newName, newdescription);
+                    listEntity.id  = appDatabase.listDao().insertList(listEntity);
+                } else {
+                    // Update exsisting name and description
+                    appDatabase.listDao().updateListNameAndDescription(listEntity.id, newName, newdescription);
+
+                    appDatabase.itemsInListDao().deleteItemsInListByListId(listEntity.id);
+
+                }
+
+                Log.d("SAVE_CHANGES", "sono qui2");
 
 
+                for(String itemIdAndName: itemList) {
+                    int index = itemIdAndName.indexOf(ID_AND_NAME_SEPERATOR);
+                    long idItem = Long.parseLong(itemIdAndName.substring(0, index));
+                    String nameItem = itemIdAndName.substring(index+1);
+
+
+                    if (idItem == -1) {
+                        // New item creation
+                        ItemEntity item1 = new ItemEntity(nameItem, false);
+                        item1.id = appDatabase.itemDao().insertItem(item1);
+                        idItem = item1.id;
+                    }
+
+                    // Insert new item in the list
+                    ItemsInList itemsInList1 = new ItemsInList();
+                    itemsInList1.listId = listEntity.getId();
+                    itemsInList1.itemId = idItem;
+                    itemsInList1.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList1);
+
+                }
+
+                Log.d("SAVE_CHANGES", "sono qui3");
+
+                finish();
+
+
+            }
+        });
+
+        threadUpdate.start();
+        for(String s: itemList)
+            Log.d("ITEMS", "Item da salvare:" +s);
 
 
 
 
     }
+
 
     @SuppressLint("MissingSuperCall")
     @Override
@@ -263,8 +416,9 @@ public class AddOrModifyList extends AppCompatActivity {
 
                     public void onClick(DialogInterface dialog, int whichButton) {
                         // User wants to save changes
+                        saveChangesAndFinish();
                         Toast.makeText(getApplicationContext(), "User wants to save changes", Toast.LENGTH_SHORT).show();
-                        finish();
+                        saveChangesAndFinish();
                     }
                 })
                 .setNegativeButton(R.string.no, new DialogInterface.OnClickListener() {
@@ -283,9 +437,9 @@ public class AddOrModifyList extends AppCompatActivity {
     @Override
     public void finish(){
 
-
+        Log.d("SAVE_CHANGES", "sono qui 4");
         Intent i = new Intent();
-        i.putExtra("CodRisposta","Addio!");
+        i.putExtra(MainActivity.RESPONSE_KEY,"Addio!");
         setResult(RESULT_OK, i);
         super.finish();
 

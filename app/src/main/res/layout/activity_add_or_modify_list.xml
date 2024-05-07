@@ -8,9 +8,7 @@
 
     <TextView
         android:id="@+id/textView"
-        style="@style/TitoloApp"
-    />
-
+        style="@style/TitoloApp" />
     <EditText
         android:id="@+id/editText_listName"
         android:layout_width="0dp"
@@ -135,7 +133,6 @@
         app:layout_constraintEnd_toEndOf="@+id/listView_itemsRemove"
         app:layout_constraintStart_toEndOf="@+id/button_cancelChanges"
         app:layout_constraintTop_toTopOf="@+id/button_cancelChanges" />
-
 
 
 

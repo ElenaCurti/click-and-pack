@@ -19,6 +19,7 @@
 
     <!-- Errors -->
     <string name="error_creating_new_list">There was an error during the creation of a new list!</string>
+    <string name="error_modifying_list">There was an error during the editing of a list!</string>
 
 
 

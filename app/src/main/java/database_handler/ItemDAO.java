@@ -16,6 +16,8 @@ public interface ItemDAO {
     void deleteAllItems();
 
 
-    @Query("SELECT * FROM items")
-    List<ItemEntity> getAllItems();
+    @Query("SELECT * FROM items WHERE isDetectableByImages IS 1")
+    List<ItemEntity> getAllDetectableItems();
+
+
 }

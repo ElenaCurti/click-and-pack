@@ -30,6 +30,10 @@ public interface ItemsInListDAO {
 
     @Query("DELETE FROM items_in_list")
     void deleteAllItemsInLists();
+
+    @Query("DELETE FROM items_in_list WHERE listId = :listId")
+    void deleteItemsInListByListId(long listId);
+
 }
 
 
