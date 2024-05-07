@@ -29,73 +29,58 @@ import database_handler.ListEntity;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final int REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2;
     private static final String TAG_LOGGER = "MyTag_MainActivity";
 
+    // Intent request code
+    private static final int REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2;
+    // Intent keys and values
     public static final String OPERATION_NAME = "action";
     public static final String OPERATION_ADD_LIST = "add_list";
     public static final String OPERATION_MODIFY_LIST = "modify_list";
 
     public static final String RESPONSE_KEY = "response";
 
+    // Lists adapter
     private ArrayAdapter<String> adapterListe;
+    private List<ListEntity> userLists;
 
 
+    // Database
     private AppDatabase appDatabase;
 
-    private List<ListEntity> userLists;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        //populateListsCollection();
-
-        FloatingActionButton buttonAddList = (FloatingActionButton) findViewById(R.id.floatingActionButton_aggiungi);
-
-        buttonAddList.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                /* User wants to add a new list */
-                Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
-                i.putExtra(OPERATION_NAME, OPERATION_ADD_LIST);
-                startActivityForResult(i,REQUEST_CODE_ADD_LIST);
-            }
+        // "Add new list" button click listener
+        findViewById(R.id.floatingActionButton_aggiungi).setOnClickListener( v -> {
+            Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
+            i.putExtra(OPERATION_NAME, OPERATION_ADD_LIST);
+            startActivityForResult(i,REQUEST_CODE_ADD_LIST);
         });
-
 
         readAndShowUserLists();
     }
 
     private void readAndShowUserLists(){
-
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
-        Thread t = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                //creazioneEdUsoContentPersonalizzato(true);
-                readUserLists();
-                //populateListsCollection();
-            }
+        Thread t = new Thread(() -> {
+            initializeAppDatabase();
+            userLists = appDatabase.listDao().getAllLists();
         });
-
         t.start();
 
+        // Wait for the background thread to finish
         try {
-            t.join(); // Wait for the background thread to finish
+            t.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
 
-        // Execute populateListsCollection() on the main thread
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                populateListsCollection();
-            }
-        });
-
+        // Execute setInitialGUI() on the main thread
+        runOnUiThread(() ->  setInitialGUI());
 
     }
 
@@ -104,21 +89,87 @@ public class MainActivity extends AppCompatActivity {
             appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
     }
 
-    private void readUserLists() {
 
-        initializeAppDatabase();
 
-        userLists = appDatabase.listDao().getAllLists();
-        if (userLists == null ) {
-            Log.d(TAG_LOGGER + "_db", "user lists is null");
-        } else  {
-            Log.d(TAG_LOGGER + "_db", "user lists is NOT null");
-            for(ListEntity le: userLists)
-                Log.d(TAG_LOGGER + "_db", "lista: " + le.toString());
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        String textToShow = "";
+        if (resultCode == RESULT_OK) {
+            readAndShowUserLists();
+            textToShow = data.getExtras().getString(RESPONSE_KEY);
+        } else {
+            switch(requestCode){
+                case REQUEST_CODE_ADD_LIST:
+                    textToShow = getString(R.string.error_creating_new_list);
+                    break;
+                case REQUEST_CODE_MODIFY_LIST:
+                    textToShow = getString(R.string.error_modifying_list);
+                    break;
+                default:
+                    textToShow = getString(R.string.general_error);
+            }
         }
 
+        Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
+    }
 
+    private void setInitialGUI() {
+        if (userLists == null || userLists.size() == 0) {
+            findViewById(R.id.textView_noList).setVisibility(View.VISIBLE);
+        } else
+            findViewById(R.id.textView_noList).setVisibility(View.GONE);
+
+        // Temporary list of strings of fixed size passed to the ArrayAdapter
+        List<String> fixedSizeList = new ArrayList<>(Collections.nCopies(userLists.size(), ""));
+
+        // Adapter for the list
+        adapterListe = new ArrayAdapter<String>(this, R.layout.elenco_liste_prima_videata, fixedSizeList) {
+            @Override
+            public View getView(int position, View convertView, ViewGroup parent) {
+                View view = convertView;
+
+                // Create view if null
+                if (view == null) {
+                    LayoutInflater inflater = LayoutInflater.from(getContext());
+                    view = inflater.inflate(R.layout.elenco_liste_prima_videata, parent, false);
+                }
+
+                // Set list name and description as main-item and sub-item
+                ListEntity listEntity = userLists.get(position);
+                long id = listEntity.getId();
+
+                TextView mainItemTextView = view.findViewById(R.id.textView_main_item);
+                mainItemTextView.setText(listEntity.getName());
+
+                TextView subItemTextView = view.findViewById(R.id.textView_sub_item);
+                subItemTextView.setText(listEntity.getDescription());
+
+                // Click listener of "visualize list" and "modify list"
+                FloatingActionButton buttonVisualizza = view.findViewById(R.id.floatingActionButton_visualizza);
+                buttonVisualizza.setTag(id);
+                buttonVisualizza.setOnClickListener(v -> {
+                    // TODO
+                    Toast.makeText(getApplicationContext(), "Id: " + v.getTag() + "  Tipo: visualizza" , Toast.LENGTH_SHORT).show();
+                });
+
+                FloatingActionButton buttonModifica = view.findViewById(R.id.floatingActionButton_modifica);
+                buttonModifica.setTag(id);
+
+                buttonModifica.setOnClickListener (v -> {
+                    Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
+                    i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST + " " + v.getTag());
+                    startActivityForResult(i,REQUEST_CODE_MODIFY_LIST);
+                });
+
+                return view;
+
+            }
+        };
+
+        ListView listView = findViewById(R.id.listView_liste);
+        listView.setAdapter(adapterListe);
     }
 
     private void creazioneEdUsoContentPersonalizzato(boolean resetAllaFine){
@@ -175,105 +226,5 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-
-
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        if (resultCode == RESULT_OK) {
-            readAndShowUserLists();
-            return;
-        }
-
-        // String risposta = data.getExtras().getString(RESPONSE_KEY);
-        // Toast.makeText(this, "Risposta: " + risposta, Toast.LENGTH_LONG).show();
-        if (requestCode == REQUEST_CODE_ADD_LIST) {
-
-            Toast.makeText(this, getString(R.string.error_creating_new_list), Toast.LENGTH_LONG).show();
-
-        } else if (requestCode == REQUEST_CODE_MODIFY_LIST) {
-            Toast.makeText(this, getString(R.string.error_modifying_list), Toast.LENGTH_LONG).show();
-
-        }
-    }
-
-    private void populateListsCollection() {
-        if (userLists == null || userLists.size() == 0){
-            // TODO. inserire text view
-            return;
-        }
-
-
-        Log.d(MainActivity.TAG_LOGGER+"_nl_", "Numero liste: " + userLists.size());
-
-        /*for (ListEntity lista: userLists) {
-            id.
-            mainItems.add(lista.getName());
-            subItems.add(lista.getDescription());
-        }*/
-
-        // Sample data for main and sub items
-        /*mainItems.add("Sea list");
-        mainItems.add("Ski list");
-
-        subItems.add("List for sea items");
-        subItems.add("List for skii vacation");*/
-
-        // Temporary list of strings of fixed size passed to the ArrayAdapter
-        List<String> fixedSizeList = new ArrayList<>(Collections.nCopies(userLists.size(), ""));
-
-        // TODO se #liste ==0 aggiungi textview del tipo "schiaccia + per aggiungere lista"
-        /* Create an adapter and assign it to the ListView */
-        adapterListe = new ArrayAdapter<String>(this, R.layout.elenco_liste_prima_videata, fixedSizeList) {
-            @Override
-            public View getView(int position, View convertView, ViewGroup parent) {
-                View view = convertView;
-
-                if (view == null) {
-                    Log.d(TAG_LOGGER, "view at position " + position + " is null");
-                    LayoutInflater inflater = LayoutInflater.from(getContext());
-                    view = inflater.inflate(R.layout.elenco_liste_prima_videata, parent, false);
-                }
-                Log.d(TAG_LOGGER, "view at position " + position + " is NOT null");
-
-                TextView mainItemTextView = view.findViewById(R.id.textView_main_item);
-                TextView subItemTextView = view.findViewById(R.id.textView_sub_item);
-
-                ListEntity listEntity = userLists.get(position);
-                mainItemTextView.setText(listEntity.getName());
-                subItemTextView.setText(listEntity.getDescription());
-                long id = listEntity.getId();
-
-                FloatingActionButton buttonVisualizza = (FloatingActionButton) view.findViewById(R.id.floatingActionButton_visualizza);
-                FloatingActionButton buttonModifica = (FloatingActionButton) view.findViewById(R.id.floatingActionButton_modifica);
-
-                View.OnClickListener buttonsClickListener = new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        FloatingActionButton pressedButton = (FloatingActionButton) view;
-                        String tipoButton = "";
-                        if ( pressedButton == buttonVisualizza )
-                            tipoButton = "visualizza";
-                        else if ( pressedButton == buttonModifica ) {
-                            tipoButton = "modifica";
-                            Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
-                            i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST + " " + id);
-                            startActivityForResult(i,REQUEST_CODE_MODIFY_LIST);
-                        }
-                        Toast.makeText(getApplicationContext(), "Id: " + id + "  Tipo: " + tipoButton , Toast.LENGTH_SHORT).show();
-                    }
-                };
-
-                buttonVisualizza.setOnClickListener(buttonsClickListener);
-                buttonModifica.setOnClickListener(buttonsClickListener);
-
-                return view;
-
-            }
-        };
-
-        ListView listView = findViewById(R.id.listView_liste);
-        listView.setAdapter(adapterListe);
-    }
 
 }

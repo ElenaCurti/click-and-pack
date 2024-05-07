@@ -10,6 +10,21 @@
         android:id="@+id/textView"
         style="@style/TitoloApp" />
 
+    <TextView
+        android:id="@+id/textView_noList"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:text="@string/no_list"
+        android:textColor="@color/my_gray"
+        android:textSize="20dp"
+        app:layout_constraintBottom_toTopOf="@+id/floatingActionButton_aggiungi"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView" />
+
+
     <ListView
         android:id="@+id/listView_liste"
         android:layout_width="0dp"

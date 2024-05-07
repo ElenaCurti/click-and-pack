@@ -13,13 +13,21 @@
     <string name="new_item_name_placeholder">New item name</string>
 
     <string name="empty_list">List is empty. Add an item by searching its name.</string>
+    <string name="no_list">You don\'t have any lists yet. Add one pressing the below button. </string>
     <string name="delete_list_title">Delete list</string>
     <string name="cancel_changes">Cancel changes</string>
     <string name="save_changes_title">Save changes</string>
 
+    <string name="list_creation_ok">New list created correctly!</string>
+    <string name="list_update_ok">Existing list upstated succesfully!</string>
+    <string name="cancel_changes_ok">All changes have been canceled!</string>
+    <string name="delete_list_ok">Selected list has been succesfully deleted!</string>
+
     <!-- Errors -->
+    <string name="general_error">An error occurred during last operation!</string>
     <string name="error_creating_new_list">There was an error during the creation of a new list!</string>
     <string name="error_modifying_list">There was an error during the editing of a list!</string>
+    <string name="error_name_non_empty">Name of the list cannot be empty!</string>
 
 
 
