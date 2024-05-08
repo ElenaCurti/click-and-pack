@@ -9,9 +9,7 @@
 
     <TextView
         android:id="@+id/textView4"
-        style="@style/TitoloApp"
-        tools:layout_editor_absoluteX="96dp"
-        tools:layout_editor_absoluteY="20dp" />
+        style="@style/TitoloApp" />
 
     <TextView
         android:id="@+id/textView_listName"

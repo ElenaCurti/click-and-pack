@@ -35,4 +35,7 @@
     <string name="no_items">This list has no items. To add a new item, go to Home -> Modify list. </string>
     <string name="error_with_existing_list">There was an error with the selected list. List seems to be inexistent. </string>
 
+    <string name="camera_permission_denied_error">Camera permission denied! Camera permission is necessary to check list with images! </string>
+
+
 </resources>

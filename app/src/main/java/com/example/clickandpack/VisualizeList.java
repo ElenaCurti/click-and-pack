@@ -7,6 +7,7 @@ import androidx.room.Room;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.util.Pair;
 import android.view.View;
 import android.widget.CheckBox;
@@ -27,6 +28,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private ListEntity listEntity = null;
     private List<ItemWithStatus> itemsWithStatus = null ;
     private String response = "";
+    public static final String RESPONSE_KEY_FROM_IMAGE_CHECKER = "response-checker";
+
+    private int REQUEST_CODE_CHECK_LIST_WITH_IMAGES = 4;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,8 +85,25 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     }
 
     private void checkListWithImages(){
+        // TODO check lista items non vuota + check almeno 1 item e' detectable + permessi fotocamera
+        Intent i = new Intent(getApplicationContext(), CheckListWithImages.class);
+        startActivityForResult(i,REQUEST_CODE_CHECK_LIST_WITH_IMAGES);
 
+    }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d("TAG","ora sono qui. data is null: ");
+        Log.d("TAG", data == null ? "si" : "no");
+        //Log.d("TAG","ora sono qui. data.getExtras() is null: " + data.getExtras() == null ? "si" : "no");
+        if ( data != null && data.getExtras() != null) {
+            String textToShow = data.getExtras().getString(RESPONSE_KEY_FROM_IMAGE_CHECKER);
+
+            if (!textToShow.equals(""))
+                Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
+
+        }
     }
 
 
@@ -112,12 +133,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             ItemWithStatus item_status = itemsWithStatus.get(i);
 
             CheckBox checkBox = new MyCheckBox(this);
-
-            // Set CheckBox properties
             checkBox.setText(item_status.item.getName());
             checkBox.setTag(item_status.items_in_list_id);
             checkBox.setChecked(item_status.isChecked);
-
             checkBox.setOnCheckedChangeListener(this);
 
             linearLayoutListItems.addView(checkBox);
