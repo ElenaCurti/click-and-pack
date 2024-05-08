@@ -7,12 +7,10 @@ import androidx.room.Room;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -88,7 +86,7 @@ public class AddOrModifyList extends AppCompatActivity {
         if (operation.startsWith(MainActivity.OPERATION_MODIFY_LIST)) {
             long idList = Long.parseLong( ( (String[]) operation.split(" ") )[1]);
             listEntity = appDatabase.listDao().getListFromId(idList);
-            listEntity.itemsInList = appDatabase.itemsInListDao().getItemsInList(idList);
+            listEntity.itemsInList = appDatabase.itemsInListDao().getAllItemsInList(idList);
         }
 
         // Read detectable items for the "dropdown" menu
@@ -138,9 +136,7 @@ public class AddOrModifyList extends AppCompatActivity {
                 }
 
                 // Insert new item in the list
-                ItemsInList itemsInList1 = new ItemsInList();
-                itemsInList1.listId = listEntity.getId();
-                itemsInList1.itemId = idItem;
+                ItemsInList itemsInList1 = new ItemsInList(listEntity.getId(), idItem, false);
                 itemsInList1.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList1);
             }
             finish();

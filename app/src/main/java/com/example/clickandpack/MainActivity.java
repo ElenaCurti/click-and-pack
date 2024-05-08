@@ -32,11 +32,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String TAG_LOGGER = "MyTag_MainActivity";
 
     // Intent request code
-    private static final int REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2;
+    private static final int  REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2, REQUEST_CODE_VISUALIZE_LIST = 3;
     // Intent keys and values
     public static final String OPERATION_NAME = "action";
     public static final String OPERATION_ADD_LIST = "add_list";
     public static final String OPERATION_MODIFY_LIST = "modify_list";
+
+    public static final String ID_LIST = "id_list";
 
     public static final String RESPONSE_KEY = "response";
 
@@ -107,6 +109,9 @@ public class MainActivity extends AppCompatActivity {
                 case REQUEST_CODE_MODIFY_LIST:
                     textToShow = getString(R.string.error_modifying_list);
                     break;
+                case REQUEST_CODE_VISUALIZE_LIST:
+                    // TODO
+                    break;
                 default:
                     textToShow = getString(R.string.general_error);
             }
@@ -151,6 +156,9 @@ public class MainActivity extends AppCompatActivity {
                 buttonVisualizza.setTag(id);
                 buttonVisualizza.setOnClickListener(v -> {
                     // TODO
+                    Intent i = new Intent(getApplicationContext(), VisualizeList.class);
+                    i.putExtra(ID_LIST,  "" + v.getTag());
+                    startActivityForResult(i,REQUEST_CODE_VISUALIZE_LIST);
                     Toast.makeText(getApplicationContext(), "Id: " + v.getTag() + "  Tipo: visualizza" , Toast.LENGTH_SHORT).show();
                 });
 
@@ -197,28 +205,20 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG_LOGGER + "", "list1 id: " + list1.getId()) ;
         Log.d(TAG_LOGGER + "", "item1 id: " + item1.getId()) ;
 
-        ItemsInList itemsInList1 = new ItemsInList();
-        itemsInList1.listId = list1.getId();
-        itemsInList1.itemId = item1.getId();
+        ItemsInList itemsInList1 = new ItemsInList(list1.getId(), item1.getId(), false);
         itemsInList1.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList1);
 
-        ItemsInList itemsInList2 = new ItemsInList();
-        itemsInList2.listId = list1.getId();
-        itemsInList2.itemId = item2.getId();
+        ItemsInList itemsInList2 = new ItemsInList(list1.getId(), item2.getId(), false);
         itemsInList2.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList2);
 
         // Create list 2 with items item 2 and item 3
         ListEntity list2 = new ListEntity("list 2", "This is the description for list 2");
         list2.id = appDatabase.listDao().insertList(list2);
 
-        ItemsInList itemsInList3 = new ItemsInList();
-        itemsInList3.listId = list2.getId();
-        itemsInList3.itemId = item2.getId();
+        ItemsInList itemsInList3 = new ItemsInList(list2.getId(), item2.getId(), true);
         itemsInList3.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList3);
 
-        ItemsInList itemsInList4 = new ItemsInList();
-        itemsInList4.listId = list2.getId();
-        itemsInList4.itemId = item3.getId();
+        ItemsInList itemsInList4 = new ItemsInList(list2.getId(), item3.getId(), false);
         itemsInList4.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList4);
 
 

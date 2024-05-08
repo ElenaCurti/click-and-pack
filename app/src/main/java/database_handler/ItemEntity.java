@@ -1,5 +1,7 @@
 package database_handler;
 import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.Insert;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "items")

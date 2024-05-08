@@ -30,5 +30,7 @@
     <string name="error_name_non_empty">Name of the list cannot be empty!</string>
 
 
+    <!-- Visualize list   -->
+    <string name="check_list_with_images">Check list with images</string>
 
 </resources>

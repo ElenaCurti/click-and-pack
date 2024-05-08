@@ -24,8 +24,12 @@ public interface ItemsInListDAO {
     @Query("SELECT items.* FROM items_in_list " +
             "INNER JOIN items ON items_in_list.itemId = items.id " +
             "WHERE listId = :idSearched")
-    List<ItemEntity> getItemsInList(long idSearched);
+    List<ItemEntity> getAllItemsInList(long idSearched);
 
+    @Query("SELECT items.* FROM items_in_list " +
+            "INNER JOIN items ON items_in_list.itemId = items.id " +
+            "WHERE listId = :idSearched AND items_in_list.isChecked IS :checkedStatus")
+    List<ItemEntity> getItemsInListWithGivenChecked(long idSearched, int checkedStatus);
 
 
     @Query("DELETE FROM items_in_list")
