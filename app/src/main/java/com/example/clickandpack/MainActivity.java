@@ -110,14 +110,13 @@ public class MainActivity extends AppCompatActivity {
                     textToShow = getString(R.string.error_modifying_list);
                     break;
                 case REQUEST_CODE_VISUALIZE_LIST:
-                    // TODO
                     break;
                 default:
                     textToShow = getString(R.string.general_error);
             }
         }
-
-        Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
+        if (!textToShow.equals(""))
+            Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
     }
 
     private void setInitialGUI() {
@@ -159,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
                     Intent i = new Intent(getApplicationContext(), VisualizeList.class);
                     i.putExtra(ID_LIST,  "" + v.getTag());
                     startActivityForResult(i,REQUEST_CODE_VISUALIZE_LIST);
-                    Toast.makeText(getApplicationContext(), "Id: " + v.getTag() + "  Tipo: visualizza" , Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(getApplicationContext(), "Id: " + v.getTag() + "  Tipo: visualizza" , Toast.LENGTH_SHORT).show();
                 });
 
                 FloatingActionButton buttonModifica = view.findViewById(R.id.floatingActionButton_modifica);

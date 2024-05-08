@@ -7,22 +7,26 @@ import androidx.room.Room;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Pair;
+import android.view.View;
 import android.widget.CheckBox;
+import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.util.List;
 
 import database_handler.AppDatabase;
 import database_handler.ItemEntity;
+import database_handler.ItemWithStatus;
 import database_handler.ListEntity;
 
-public class VisualizeList extends AppCompatActivity {
+public class VisualizeList extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
     private AppDatabase appDatabase;
     private ListEntity listEntity = null;
-    private List<ItemEntity> checkedItems = null;
-    private List<ItemEntity> notCheckedItems = null;
-
+    private List<ItemWithStatus> itemsWithStatus = null ;
+    private String response = "";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,6 +53,7 @@ public class VisualizeList extends AppCompatActivity {
         runOnUiThread(() ->  setInitialGUI());
 
         findViewById(R.id.button_checkListWithImages).setOnClickListener(view -> checkListWithImages());
+        findViewById(R.id.floatingActionButton_backToHome).setOnClickListener(view -> backToHome());
 
 
     }
@@ -62,9 +67,17 @@ public class VisualizeList extends AppCompatActivity {
     private void readDatabase(long idList) {
         initializeAppDatabase();
         listEntity = appDatabase.listDao().getListFromId(idList);
-        listEntity.itemsInList = appDatabase.itemsInListDao().getAllItemsInList(idList);
-        checkedItems = appDatabase.itemsInListDao().getItemsInListWithGivenChecked(idList, 1);
-        notCheckedItems = appDatabase.itemsInListDao().getItemsInListWithGivenChecked(idList, 0);
+        itemsWithStatus = appDatabase.itemsInListDao().getItemsWithStatus(idList);
+    }
+
+    private void backToHome(){
+        if (!response.equals("")) {
+            Intent i = new Intent();
+            i.putExtra(MainActivity.RESPONSE_KEY, response);
+            setResult(RESULT_OK, i);
+        }
+
+        finish();
     }
 
     private void checkListWithImages(){
@@ -75,7 +88,9 @@ public class VisualizeList extends AppCompatActivity {
 
     private void setInitialGUI(){
         if (listEntity == null){
-            // TODO forse torna alla home
+            // Should never happen
+            response = getString(R.string.error_with_existing_list);
+            backToHome();
             return;
         }
 
@@ -84,23 +99,36 @@ public class VisualizeList extends AppCompatActivity {
 
         LinearLayout linearLayoutListItems = findViewById(R.id.linearLayout_listItems);
 
-//        for (int i = 0; i < 20 ; i++) {
 
-            for (ItemEntity ie : listEntity.itemsInList) {
-                CheckBox checkBox = new MyCheckBox(this);
+        if (itemsWithStatus == null || itemsWithStatus.size() == 0){
+            findViewById(R.id.textView_noItems).setVisibility(View.VISIBLE);
+            return;
+        }
 
-                // Set CheckBox properties
-                checkBox.setText(ie.getName());
-                checkBox.setTag(ie.getId());
-                checkBox.setChecked(false); // TODO
-
-                linearLayoutListItems.addView(checkBox);
-            }
-
-//        }
+        findViewById(R.id.textView_noItems).setVisibility(View.GONE);
 
 
+        for (int i = 0; i < itemsWithStatus.size(); i++) {
+            ItemWithStatus item_status = itemsWithStatus.get(i);
 
+            CheckBox checkBox = new MyCheckBox(this);
+
+            // Set CheckBox properties
+            checkBox.setText(item_status.item.getName());
+            checkBox.setTag(item_status.items_in_list_id);
+            checkBox.setChecked(item_status.isChecked);
+
+            checkBox.setOnCheckedChangeListener(this);
+
+            linearLayoutListItems.addView(checkBox);
+        }
     }
 
+    @Override
+    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        long idItemInList = Long.parseLong("" + buttonView.getTag());
+        //Toast.makeText(this, "view:" + buttonView.getText() + " " + buttonView.getTag(), Toast.LENGTH_LONG ).show();
+        new Thread(() -> appDatabase.itemsInListDao().updateItemChecked(idItemInList, isChecked ))
+                .start();
+    }
 }

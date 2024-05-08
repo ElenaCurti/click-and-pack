@@ -1,5 +1,7 @@
 package database_handler;
 
+import android.util.Pair;
+
 import androidx.room.Dao;
 import androidx.room.Insert;
 import androidx.room.Query;
@@ -26,17 +28,23 @@ public interface ItemsInListDAO {
             "WHERE listId = :idSearched")
     List<ItemEntity> getAllItemsInList(long idSearched);
 
-    @Query("SELECT items.* FROM items_in_list " +
-            "INNER JOIN items ON items_in_list.itemId = items.id " +
-            "WHERE listId = :idSearched AND items_in_list.isChecked IS :checkedStatus")
-    List<ItemEntity> getItemsInListWithGivenChecked(long idSearched, int checkedStatus);
-
-
     @Query("DELETE FROM items_in_list")
     void deleteAllItemsInLists();
 
     @Query("DELETE FROM items_in_list WHERE listId = :listId")
     void deleteItemsInListByListId(long listId);
+
+    @Query("SELECT items.*, isChecked, items_in_list.id AS items_in_list_id " +
+            "FROM items_in_list " +
+            "INNER JOIN items ON items_in_list.itemId = items.id " +
+            "WHERE items_in_list.listId = :listId")
+    List<ItemWithStatus> getItemsWithStatus(long listId);
+
+
+    @Query("UPDATE items_in_list SET isChecked = :isChecked WHERE id = :itemId")
+    void updateItemChecked(long itemId, boolean isChecked);
+
+
 
 }
 
