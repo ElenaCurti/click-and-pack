@@ -1,0 +1,38 @@
+# Index, label name
+30,Sunglasses
+84,Necklace
+85,Bracelet
+161,Hat
+283,Lipstick
+253,Earring
+166,Scarf
+162,Scarf
+100,Tie
+317,Handbag
+344,Wallet
+343,Belt
+83,Gloves
+113,Watch
+410,Umbrella
+19,Tights
+51,Shorts
+68,Swimwear
+58,Dress
+165,Jersey
+249,Leggings
+159,Cap
+164,Beanie
+192,Toothbrush
+193,Toothpaste
+316,Shampoo
+59,Conditioner
+224,Soap
+190,Deodorant
+167,Razor
+139,Shaving cream
+274,Comb
+215,Hairbrush
+47,Sunscreen
+186,Moisturizer
+132,Lip balm
+206,Hand sanitizer

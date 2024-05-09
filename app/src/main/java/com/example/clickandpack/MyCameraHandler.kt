@@ -4,6 +4,7 @@ package com.example.clickandpack;
 
 import android.util.Log
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -14,6 +15,9 @@ import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
+import com.google.mlkit.vision.common.InputImage
+import com.google.mlkit.vision.label.ImageLabeling
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import java.util.concurrent.ExecutorService
 
 class MyCameraHandler (private val viewBinding: ActivityCheckListWithImagesBinding, private val cameraExecutor: ExecutorService)  {
@@ -23,14 +27,55 @@ class MyCameraHandler (private val viewBinding: ActivityCheckListWithImagesBindi
     private var i: Int = 0
     private val CAMERA_TAG = "CAMERA_TAG";
 
+
+
+    @androidx.camera.core.ExperimentalGetImage
     fun startCameraView(mainActivity: AppCompatActivity){
+        val labeler = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
+
 
         val lineAnalyzer = ImageAnalysis.Builder()
                 .build()
                 .apply {
-            setAnalyzer(cameraExecutor, ImageAnalysis.Analyzer { image ->
+            setAnalyzer(cameraExecutor, ImageAnalysis.Analyzer { imageProxy ->
                 newImageAvailable();
-                image.close()
+
+                val mediaImage = imageProxy.image
+                if (mediaImage != null) {
+                    val image =
+                        InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
+
+                    labeler.process(image)
+                        .addOnSuccessListener { labels ->
+                            // Task completed successfully
+                            // ...
+                            viewBinding.linearLayoutResultML.removeAllViews()
+                            var textView = TextView(mainActivity)
+
+                            Log.d("RESULT_IMAGE_LAB", "ok. " + labels.size);
+                            var names : String = "";
+                            labels.forEach { l ->
+                                names += "" + l.index + "." + l.text + " "
+                            }
+
+                            textView.text = names
+                            viewBinding.linearLayoutResultML.addView(textView)
+                            //..textView_resultML.text = names;
+                            Log.d("RESULT_IMAGE_LAB", names);
+
+
+
+
+                        }
+                        .addOnFailureListener { e ->
+                            // Task failed with an exception
+                            // ...
+                            Log.d("RESULT_IMAGE_LAB", "error:" + e.message);
+                        }
+                        .addOnCompleteListener {
+                            mediaImage.close()
+                            imageProxy.close() }
+                }
             })
         }
 
@@ -63,6 +108,8 @@ class MyCameraHandler (private val viewBinding: ActivityCheckListWithImagesBindi
         }
 
         }, ContextCompat.getMainExecutor(mainActivity))
+
+
     }
 
 

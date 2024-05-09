@@ -50,9 +50,20 @@
         app:layout_constraintTop_toBottomOf="@+id/viewFinder">
 
         <LinearLayout
+            android:id="@+id/linearLayout_resultML"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical" />
+            android:orientation="vertical" >
+
+            <TextView
+                android:id="@+id/textView_resultML"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="20dp"
+                android:text="TextView"
+                />
+        </LinearLayout>
+
     </ScrollView>
 
     <View
@@ -62,6 +73,7 @@
         android:background="@drawable/shape_rectangle"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />
+
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

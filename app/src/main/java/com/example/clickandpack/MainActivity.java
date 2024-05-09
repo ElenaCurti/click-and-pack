@@ -1,6 +1,7 @@
 package com.example.clickandpack;
 
 import static database_handler.AppDatabase.DB_NAME;
+import static database_handler.MyDatabaseInitiator.populateDB;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
@@ -70,6 +71,7 @@ public class MainActivity extends AppCompatActivity {
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(() -> {
             initializeAppDatabase();
+            // populateDB(this, appDatabase); // TODO da rimuovere
             userLists = appDatabase.listDao().getAllLists();
         });
         t.start();
@@ -179,50 +181,9 @@ public class MainActivity extends AppCompatActivity {
         listView.setAdapter(adapterListe);
     }
 
-    private void creazioneEdUsoContentPersonalizzato(boolean resetAllaFine){
-
-        initializeAppDatabase();
-
-        appDatabase.listDao().deleteAllLists();
-        appDatabase.itemDao().deleteAllItems();
-        appDatabase.itemsInListDao().deleteAllItemsInLists();
-
-        // Create items
-        ItemEntity item1 = new ItemEntity("item 1", false);
-        ItemEntity item2 = new ItemEntity("item 2", true);
-        ItemEntity item3 = new ItemEntity("item 3", false);
-
-        // Insert items into the database
-        item1.id = appDatabase.itemDao().insertItem(item1);
-        item2.id = appDatabase.itemDao().insertItem(item2);
-        item3.id = appDatabase.itemDao().insertItem(item3);
-
-        // Create list 1 with items item 1 and item 2
-        ListEntity list1 = new ListEntity("list 1", "This is the description for list 1");
-        list1.id  = appDatabase.listDao().insertList(list1);
-
-        Log.d(TAG_LOGGER + "", "list1 id: " + list1.getId()) ;
-        Log.d(TAG_LOGGER + "", "item1 id: " + item1.getId()) ;
-
-        ItemsInList itemsInList1 = new ItemsInList(list1.getId(), item1.getId(), false);
-        itemsInList1.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList1);
-
-        ItemsInList itemsInList2 = new ItemsInList(list1.getId(), item2.getId(), false);
-        itemsInList2.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList2);
-
-        // Create list 2 with items item 2 and item 3
-        ListEntity list2 = new ListEntity("list 2", "This is the description for list 2");
-        list2.id = appDatabase.listDao().insertList(list2);
-
-        ItemsInList itemsInList3 = new ItemsInList(list2.getId(), item2.getId(), true);
-        itemsInList3.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList3);
-
-        ItemsInList itemsInList4 = new ItemsInList(list2.getId(), item3.getId(), false);
-        itemsInList4.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList4);
 
 
 
-    }
 
 
 

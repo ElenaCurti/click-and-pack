@@ -10,8 +10,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
+import com.google.mlkit.vision.label.ImageLabeling
+import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
+
 
 class CheckListWithImages : AppCompatActivity() {
     private lateinit var viewBinding: ActivityCheckListWithImagesBinding
@@ -32,6 +35,9 @@ class CheckListWithImages : AppCompatActivity() {
         } )
 
         startCamera()
+
+
+
     }
 
     // Camera permission and (possibly) visualization
