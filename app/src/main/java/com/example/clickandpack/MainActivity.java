@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(() -> {
             initializeAppDatabase();
-            // populateDB(this, appDatabase); // TODO da rimuovere
+            populateDB(this, appDatabase); // TODO da rimuovere
             userLists = appDatabase.listDao().getAllLists();
         });
         t.start();

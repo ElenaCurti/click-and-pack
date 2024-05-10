@@ -70,6 +70,7 @@
         android:id="@+id/box_prediction"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:visibility="gone"
         android:background="@drawable/shape_rectangle"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent" />

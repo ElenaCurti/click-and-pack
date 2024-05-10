@@ -8,12 +8,14 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class MyDatabaseInitiator {
 
     private final static String TAG_LOGGER="DB_INITIATOR";
-    private final static String FILE_WITH_IMAGE_LABELS="filtered_image_labes.txt";
+    private final static String FILE_WITH_IMAGE_LABELS= "image_labeler/filtered_image_labes.txt";
 
 
     public static void populateDB(Context appContext, AppDatabase appDatabase){
@@ -61,17 +63,62 @@ public class MyDatabaseInitiator {
         for(ItemEntity ie: items)
             Log.d("item_dopo", ie.id + " " +  ie.getName());
 
-        /*
-        appDatabase.listDao().deleteAllLists();
-        appDatabase.itemDao().deleteAllItems();
-        appDatabase.itemsInListDao().deleteAllItemsInLists();
+        Random random = new Random();
 
-        Log.d("RISULTATO_INSERIMENTO", "Gia esiste? " + appDatabase.itemDao().getItemFromId().toString());
-        ItemEntity item1 = new ItemEntity("item 1", true);
-        item1.id = 1;
-        item1.id = appDatabase.itemDao().insertItem(item1);
-        Log.d("RISULTATO_INSERIMENTO", "" + item1.id);
-        */
+        // Sea list
+        ListEntity seaList = new ListEntity("Seaside", "This is the list for my sea items");
+        seaList.id  = appDatabase.listDao().insertList(seaList);
+
+        List<Integer> idItemsSea = new ArrayList<>();
+        idItemsSea.add(30);     // Sunglasses
+        idItemsSea.add(317);    // Handbag
+        idItemsSea.add(344);    // Wallet
+        idItemsSea.add(51);     // Shorts
+        idItemsSea.add(68);     // Swimwear
+        idItemsSea.add(28);     // Dress
+        idItemsSea.add(165);    // Jersey
+        idItemsSea.add(159);    // Cap
+        idItemsSea.add(192);    // Toothbrush
+        idItemsSea.add(193);    // Toothpaste
+        idItemsSea.add(224);    // Soap
+        idItemsSea.add(316);    // Shampoo
+        idItemsSea.add(47);     // Sunscreen
+        idItemsSea.add(190);    // Deodorant
+        idItemsSea.add(186);    // Moisturizer
+        idItemsSea.add(206);    // Hand sanitizer
+        idItemsSea.add(293);    // Shoe
+
+        for(Integer idItem: idItemsSea) {
+          ItemsInList il =  new ItemsInList(seaList.id, idItem, random.nextBoolean());
+          il.id = appDatabase.itemsInListDao().insertItemsInList(il);
+        }
+
+        // Winter list
+        ListEntity winterList = new ListEntity("Winter", "");
+        winterList.id  = appDatabase.listDao().insertList(winterList);
+
+        List<Integer> idItemsWinter = new ArrayList<>();
+        idItemsWinter.add(161); // Hat
+        idItemsWinter.add(166); // Scarf
+        idItemsWinter.add(83);  // Gloves
+        idItemsWinter.add(113); // Watch
+        idItemsWinter.add(410); // Umbrella
+        idItemsWinter.add(249); // Leggins
+        idItemsWinter.add(164); // Beanie
+        idItemsWinter.add(192); // Toothbrush
+        idItemsWinter.add(193); // Toothpaste
+        idItemsWinter.add(224); // Soap
+        idItemsWinter.add(316); // Shampoo
+        idItemsWinter.add(190); // Deodorant
+        idItemsWinter.add(186); // Moisturizer
+        idItemsWinter.add(206); // Hand sanitizer
+        idItemsWinter.add(293); // Shoe
+
+        for(Integer idItem: idItemsWinter) {
+            ItemsInList il =  new ItemsInList(winterList.id, idItem, random.nextBoolean());
+            il.id = appDatabase.itemsInListDao().insertItemsInList(il);
+        }
+
     }
 
     private static void creazioneEdUsoContentPersonalizzato(AppDatabase appDatabase, boolean resetAllaFine){

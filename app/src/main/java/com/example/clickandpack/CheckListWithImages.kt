@@ -9,9 +9,12 @@ import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.room.Room
 import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
-import com.google.mlkit.vision.label.ImageLabeling
-import com.google.mlkit.vision.label.defaults.ImageLabelerOptions
+import database_handler.AppDatabase
+import database_handler.ItemEntity
+import database_handler.MyDatabaseInitiator
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -23,7 +26,8 @@ class CheckListWithImages : AppCompatActivity() {
 
     private val CAMERA_PERMISSION_REQUEST_CODE = 1
     private var response: String = ""
-
+    private lateinit var idListOfDetectableItems : Set<Long>
+    private lateinit var appDatabase: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,10 +38,36 @@ class CheckListWithImages : AppCompatActivity() {
             backToVisualizeList()
         } )
 
-        startCamera()
 
+        //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
+        val t = Thread {
+            appDatabase = Room.databaseBuilder(
+                applicationContext,
+                AppDatabase::class.java, AppDatabase.DB_NAME
+            ).build()
+            var listItemsTmp = appDatabase.itemDao().allDetectableItems
+            val listIdTmp =  mutableListOf<Long>()
+            for(ie : ItemEntity in listItemsTmp)
+                listIdTmp.add(ie.id)
+            idListOfDetectableItems = listIdTmp.toSet()
 
+        }
+        t.start()
 
+        // Wait for the background thread to finish
+        try {
+            t.join()
+        } catch (e: InterruptedException) {
+            e.printStackTrace()
+        }
+
+        runOnUiThread {
+            startCamera()
+        }
+    }
+
+    public fun idListOfDetectableItems() : Set<Long> {
+        return idListOfDetectableItems
     }
 
     // Camera permission and (possibly) visualization
@@ -57,7 +87,7 @@ class CheckListWithImages : AppCompatActivity() {
                 cameraExecutor = Executors.newSingleThreadExecutor()
             if (!::cameraManager.isInitialized )
                 cameraManager = MyCameraHandler(viewBinding, cameraExecutor)
-            cameraManager.startCameraView(this)
+            cameraManager.startCameraView(this, idListOfDetectableItems)
         }
     }
 
@@ -84,6 +114,7 @@ class CheckListWithImages : AppCompatActivity() {
 
     // Back to previous view
     private fun backToVisualizeList() {
+        var listOfDetectedItems : ConcurrentSkipListSet<Int> = cameraManager.getListOfDetectedItems()
         val i = Intent()
         i.putExtra(VisualizeList.RESPONSE_KEY_FROM_IMAGE_CHECKER, response)
         setResult(RESULT_OK, i)

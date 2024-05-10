@@ -36,3 +36,5 @@
 186,Moisturizer
 132,Lip balm
 206,Hand sanitizer
+293,Shoe
+267,Passport
