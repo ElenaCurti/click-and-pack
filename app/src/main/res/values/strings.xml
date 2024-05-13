@@ -38,5 +38,8 @@
 
     <string name="camera_permission_denied_error">Camera permission denied! Camera permission is necessary to check list with images! </string>
 
+    <string name="object_detector_unknown_object">Unknown object</string>
+    <string name="object_detector_info">Click on a detected item to mark it as packed.</string>
+
 
 </resources>

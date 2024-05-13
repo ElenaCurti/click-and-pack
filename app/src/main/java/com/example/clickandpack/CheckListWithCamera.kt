@@ -123,13 +123,12 @@ class CheckListWithCamera : AppCompatActivity() {
         val i = Intent()
         i.putExtra(VisualizeList.RESPONSE_KEY_FROM_IMAGE_CHECKER, response)
         if (::cameraManager.isInitialized ) {
-            var listOfDetectedItems: ConcurrentSkipListSet<String> =
-                cameraManager.getListOfDetectedItems()
+            var listOfDetectedItems: List<Int> = cameraManager.getListOfDetectedItems()
             Log.d("Item_arrivato", "sono qui" )
-            for (item:String in listOfDetectedItems)
-                Log.d("Item_arrivato", item )
-            val arrayList: ArrayList<String> = ArrayList(listOfDetectedItems)
-            i.putExtra(VisualizeList.RESPONSE_DETECTED_LABELS_FROM_IMAGE_CHECKER, arrayList)
+            for (itemIndex:Int in listOfDetectedItems)
+                Log.d("Item_arrivato", "" +  itemIndex )
+            val arrayList: ArrayList<Int> = ArrayList(listOfDetectedItems)
+            i.putExtra(VisualizeList.RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER, arrayList)
         }
         setResult(RESULT_OK, i)
         finish()

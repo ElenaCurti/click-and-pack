@@ -13,15 +13,19 @@ import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
 import java.lang.Exception
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 
 class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBinding) : OnSuccessListener<List<DetectedObject>>, OnFailureListener {
-    private var objecteBoundingBoxView: ObjectBoundingBoxView = viewBinding.faceBoundingBoxView
+    private var objecteBoundingBoxView: ObjectBoundingBoxView = viewBinding.objectBoundingBoxView
     private val imageDetector: ObjectDetector
     private var width : Int = -1
     private var height : Int = -1
 
-    private val SEPARATOR_LABEL = " - "
+    companion object {
+        const val SEPARATOR_LABEL = "\n"
+    }
+
     private val LABEL_TO_SKIP = "Clothing"
 
     // List of detected items' ids
@@ -30,7 +34,12 @@ class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBind
     private var detectedIdsItems = ConcurrentSkipListSet<Int>()
     private var detectedLabelsItems = ConcurrentSkipListSet<String>()
 
+    private var packedTrackedIds = ConcurrentSkipListSet<Int>()
 
+    // Key is tracked id of the item. Value is the list of the object' labels' indexes
+    val mapTrackedIdToIndex = ConcurrentHashMap<Int, ConcurrentSkipListSet<Int>>()
+
+    private var packedLabelsItems = ConcurrentSkipListSet<String>()
 
     init {
         // Image Labeling
@@ -45,16 +54,24 @@ class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBind
             CustomObjectDetectorOptions.Builder(localModel)
                 .setDetectorMode(CustomObjectDetectorOptions.STREAM_MODE)
                 .enableClassification()
-                .setClassificationConfidenceThreshold(0.5f)
-                .setMaxPerObjectLabelCount(4)
+                .setClassificationConfidenceThreshold(0.6f)
+                .setMaxPerObjectLabelCount(2)
                 //.enableMultipleObjects()
                 .build()
 
         imageDetector = ObjectDetection.getClient(customObjectDetectorOptions)
+
     }
 
-    fun getListOfDetectedItems(): ConcurrentSkipListSet<String> {
-        return detectedLabelsItems
+    fun getListOfDetectedItems(): List<Int> {
+
+        var clickedTrackingIds : ConcurrentSkipListSet<Int> = objecteBoundingBoxView.getClickedTrackingIds();
+
+        val valuesForClickedKeys = mutableListOf<Int>()
+        for (key in clickedTrackingIds) {
+            mapTrackedIdToIndex[key]?.let { valuesForClickedKeys.addAll(it) }
+        }
+        return valuesForClickedKeys
     }
 
     @androidx.camera.core.ExperimentalGetImage
@@ -96,7 +113,7 @@ class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBind
     override fun onSuccess(detectedObjects: List<DetectedObject>?) {
 
         if (detectedObjects == null || detectedObjects?.size == 0 ) {
-            objecteBoundingBoxView.setNoneFound()
+            objecteBoundingBoxView.setNoObjectFound()
             return;
         }
 
@@ -106,27 +123,35 @@ class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBind
         for (obj in detectedObjects) {
             boundingBoxes.add(obj.boundingBox)
 
+            val trackingId = obj.trackingId ?: -1  // Should never be -1
+            mapTrackedIdToIndex.putIfAbsent(trackingId, ConcurrentSkipListSet())
 
             obj.labels?.forEach { label ->
-                if (!detectedIdsItems.contains(label.index)) {
+                /*if (!detectedIdsItems.contains(label.index)) {
                     // New object detected
                     Log.d("Items_rilevati", "just found " + label.text + " with index " + label.index)
                     detectedIdsItems.add(label.index)
                     detectedLabelsItems.add(label.text)
+                }*/
+
+                // If a new label was assigned to a tracked object, i add it
+                var listOfIndexesForTrackedObject = mapTrackedIdToIndex[obj.trackingId]!!
+                if (!listOfIndexesForTrackedObject.contains(label.index)){
+                    listOfIndexesForTrackedObject.add(label.index)
                 }
 
+
             }
-
-
-            var labelTexts = obj.labels.joinToString(separator = SEPARATOR_LABEL) { it.text }
-
-            if (labelTexts != LABEL_TO_SKIP) {
-                labelTexts = labelTexts.replace(LABEL_TO_SKIP + SEPARATOR_LABEL, "").trim()
+            val filteredLabels = if (obj.labels.any { it.text == LABEL_TO_SKIP && obj.labels.size > 1 }) {
+                obj.labels.filterNot { it.text == LABEL_TO_SKIP }
+            } else {
+                obj.labels
             }
+            var labelTexts = filteredLabels.joinToString(separator = SEPARATOR_LABEL) { it.text + "(" +  String.format("%.2f", it.confidence) + ")" }
+
 
             labelTexts = "" + obj.trackingId + ". " + labelTexts
 
-            val tmp: String = if (obj.labels?.isNotEmpty() == true) obj.labels!![0].text else ""
             Log.d("item_trovato" , "" + obj.trackingId + " - " +  labelTexts )
 
             texts.add(labelTexts)

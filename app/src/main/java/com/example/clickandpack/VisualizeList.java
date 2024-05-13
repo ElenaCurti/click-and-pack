@@ -5,9 +5,6 @@ import static database_handler.AppDatabase.DB_NAME;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
-import android.app.AlertDialog;
-import android.app.Dialog;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
@@ -32,7 +29,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private List<ItemWithStatus> itemsWithStatus = null ;
     private String response = "";
     public static final String RESPONSE_KEY_FROM_IMAGE_CHECKER = "response-checker";
-    public static final String RESPONSE_DETECTED_LABELS_FROM_IMAGE_CHECKER = "detected-labels";
+    public static final String RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER = "detected-indexes";
 
     private int REQUEST_CODE_CHECK_LIST_WITH_IMAGES = 4;
 
@@ -49,6 +46,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 readDatabase(Long.parseLong(idList));
             }
         });
+
         t.start();
 
         try {
@@ -57,10 +55,11 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             e.printStackTrace();
         }
 
-        // Execute setInitialGUI() on the main thread
+        // Execute setInitialGUI() on the main thread, otherwise an exception
+        // will be thrown when trying to modify the view
         runOnUiThread(() ->  setInitialGUI());
 
-        findViewById(R.id.button_checkListWithCamera).setOnClickListener(view -> checkListWithImages());
+        findViewById(R.id.button_checkListWithCamera).setOnClickListener(view -> checkListWithCamera());
         findViewById(R.id.floatingActionButton_backToHome).setOnClickListener(view -> backToHome());
 
 
@@ -88,34 +87,27 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         finish();
     }
 
-    private void checkListWithImages(){
+    private void checkListWithCamera(){
         // TODO check lista items non vuota + check almeno 1 item e' detectable + permessi fotocamera
         Intent i = new Intent(getApplicationContext(), CheckListWithCamera.class);
         startActivityForResult(i,REQUEST_CODE_CHECK_LIST_WITH_IMAGES);
 
     }
 
-    @Override
-    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-        super.onActivityResult(requestCode, resultCode, data);
-        Log.d("TAG","ora sono qui. data is null: ");
-        Log.d("TAG", data == null ? "si" : "no");
-        //Log.d("TAG","ora sono qui. data.getExtras() is null: " + data.getExtras() == null ? "si" : "no");
-        if ( data != null && data.getExtras() != null) {
-            String textToShow = data.getExtras().getString(RESPONSE_KEY_FROM_IMAGE_CHECKER);
+    private void showObjectRecognitionResultAndAskConfirm(List<Long> itemsIds){
+        initializeAppDatabase();
 
-            if (!textToShow.equals(""))
-                Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
-
-            // Retrieve ids of detected objects
-            ArrayList<String> detectedItemsId = data.getExtras().getStringArrayList(RESPONSE_DETECTED_LABELS_FROM_IMAGE_CHECKER);
-            String allDetectedItemsLabels = "No items found";   // TODO metti string
-            if (detectedItemsId != null )
-                allDetectedItemsLabels = detectedItemsId.stream()
+        new Thread(() -> {
+            List<String> itemsNames = appDatabase.itemDao().getNamesForIds(itemsIds);
+            String allDetectedItemsLabels = itemsNames.stream()
                     .collect(Collectors.joining("\n"));
 
+            Log.d("items_packed_images", allDetectedItemsLabels);
+            /*
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("Dialog Title"); // Set the title of the dialog
+
+
             builder.setMessage("Items to add: \n" + allDetectedItemsLabels); // Set the message of the dialog
             builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
                 @Override
@@ -133,6 +125,35 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             });
             AlertDialog dialog = builder.create(); // Create the dialog
             dialog.show(); // Show the dialog
+            */
+        }).start();
+
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.d("TAG","ora sono qui. data is null: ");
+        Log.d("TAG", data == null ? "si" : "no");
+        //Log.d("TAG","ora sono qui. data.getExtras() is null: " + data.getExtras() == null ? "si" : "no");
+        if ( data != null && data.getExtras() != null) {
+            String textToShow = data.getExtras().getString(RESPONSE_KEY_FROM_IMAGE_CHECKER);
+
+            if (!textToShow.equals(""))
+                Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
+
+            // Retrieve ids of detected objects
+            ArrayList<Integer> detectedItemsIndexes = data.getExtras().getIntegerArrayList(RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER);
+            if (detectedItemsIndexes == null ) {
+                // TODO "No items packed";   // TODO metti string
+            } else {
+                List<Long> longList = new ArrayList<>();
+                for (Integer integer : detectedItemsIndexes) {
+                    longList.add(integer.longValue());
+                }
+
+                showObjectRecognitionResultAndAskConfirm(longList);
+            }
 
         }
     }

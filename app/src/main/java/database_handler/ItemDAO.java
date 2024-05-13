@@ -31,5 +31,9 @@ public interface ItemDAO {
     @Query("SELECT * FROM items WHERE isDetectableByImages IS 1")
     List<ItemEntity> getAllDetectableItems();
 
+    @Query("SELECT name FROM items WHERE id IN (:ids)")
+    List<String> getNamesForIds(List<Long> ids);
+
+
 
 }

@@ -71,54 +71,9 @@ class MyCameraHandler (private val viewBinding: ActivityCheckListWithImagesBindi
 
     }
 
-    fun getListOfDetectedItems(): ConcurrentSkipListSet<String> {
+    fun getListOfDetectedItems(): List<Int> {
         return myObjDetector.getListOfDetectedItems()
     }
 
-    private fun setBoundingBox_old(view: View, x: Int, y: Int, width: Int, height: Int) {
-        val layoutParams = view.layoutParams as ViewGroup.MarginLayoutParams
-        layoutParams.apply {
-            // Calculate margins relative to the view
-            val marginLeft = x - view.x.toInt()
-            val marginTop = y - view.y.toInt()
-
-            // Set the margins and size
-            topMargin = marginTop
-            leftMargin = marginLeft
-            this.width = width
-            this.height = height
-        }
-        view.layoutParams = layoutParams
-    }
-
-    private fun setBoundingBox(view: View, marginLeft: Int, marginTop: Int, width: Int, height: Int) {
-        val layoutParams = view.layoutParams as ViewGroup.MarginLayoutParams
-        layoutParams.apply {
-            // Set the margins and size
-            topMargin = marginTop
-            leftMargin = marginLeft
-            this.width = width
-            this.height = height
-        }
-        view.layoutParams = layoutParams
-    }
-
-    private fun newImageAvailable() = viewBinding.viewFinder.post {
-        // "callback" for every new image
-        Log.d(CAMERA_TAG, "sono nell image analyzer")
-
-        // Set box dimension
-        var xPreview =  viewBinding.viewFinder.x.toInt()
-        var yPreview = viewBinding.viewFinder.y.toInt()
-        var width_preview = viewBinding.viewFinder.width
-        var height_preview = viewBinding.viewFinder.height
-
-        (viewBinding.boxPrediction.layoutParams as ViewGroup.MarginLayoutParams).apply {
-            topMargin =  yPreview + 100
-            leftMargin =  xPreview + 100
-            width = width_preview - 120
-            height = height_preview - 120
-        }
-    }
 
 }
