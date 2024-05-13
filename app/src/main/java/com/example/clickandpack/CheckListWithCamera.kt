@@ -1,11 +1,13 @@
 package com.example.clickandpack
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.window.OnBackInvokedDispatcher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -13,13 +15,12 @@ import androidx.room.Room
 import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
 import database_handler.AppDatabase
 import database_handler.ItemEntity
-import database_handler.MyDatabaseInitiator
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
-class CheckListWithImages : AppCompatActivity() {
+class CheckListWithCamera : AppCompatActivity() {
     private lateinit var viewBinding: ActivityCheckListWithImagesBinding
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var cameraManager: MyCameraHandler
@@ -112,11 +113,24 @@ class CheckListWithImages : AppCompatActivity() {
         }
     }
 
+    @SuppressLint("MissingSuperCall")
+    override fun onBackPressed() {
+        backToVisualizeList()
+    }
+
     // Back to previous view
     private fun backToVisualizeList() {
-        var listOfDetectedItems : ConcurrentSkipListSet<Int> = cameraManager.getListOfDetectedItems()
         val i = Intent()
         i.putExtra(VisualizeList.RESPONSE_KEY_FROM_IMAGE_CHECKER, response)
+        if (::cameraManager.isInitialized ) {
+            var listOfDetectedItems: ConcurrentSkipListSet<String> =
+                cameraManager.getListOfDetectedItems()
+            Log.d("Item_arrivato", "sono qui" )
+            for (item:String in listOfDetectedItems)
+                Log.d("Item_arrivato", item )
+            val arrayList: ArrayList<String> = ArrayList(listOfDetectedItems)
+            i.putExtra(VisualizeList.RESPONSE_DETECTED_LABELS_FROM_IMAGE_CHECKER, arrayList)
+        }
         setResult(RESULT_OK, i)
         finish()
     }

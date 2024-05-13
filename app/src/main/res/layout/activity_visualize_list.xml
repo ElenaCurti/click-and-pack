@@ -65,7 +65,7 @@
         android:layout_marginEnd="20dp"
         android:layout_marginBottom="20dp"
 
-        app:layout_constraintBottom_toTopOf="@+id/button_checkListWithImages"
+        app:layout_constraintBottom_toTopOf="@+id/button_checkListWithCamera"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/textView_listName"
         app:layout_constraintTop_toBottomOf="@+id/textView_listDescription">
@@ -83,13 +83,25 @@
 
 
     <Button
+        android:id="@+id/button_checkListWithCamera"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="10dp"
+        android:text="@string/check_list_with_camera"
+        app:layout_constraintBottom_toBottomOf="@+id/button_checkListWithImages"
+        app:layout_constraintEnd_toStartOf="@+id/button_checkListWithImages"
+        app:layout_constraintStart_toStartOf="@+id/textView_listName"
+        app:layout_constraintTop_toTopOf="@+id/button_checkListWithImages" />
+
+    <Button
         android:id="@+id/button_checkListWithImages"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginEnd="10dp"
         android:text="@string/check_list_with_images"
         app:layout_constraintBottom_toBottomOf="@+id/floatingActionButton_backToHome"
         app:layout_constraintEnd_toStartOf="@+id/floatingActionButton_backToHome"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/button_checkListWithCamera"
         app:layout_constraintTop_toTopOf="@+id/floatingActionButton_backToHome" />
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -101,6 +113,7 @@
         android:clickable="true"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/button_checkListWithImages"
         app:srcCompat="?attr/homeAsUpIndicator" />
 
 

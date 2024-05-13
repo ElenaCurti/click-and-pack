@@ -31,7 +31,8 @@
 
 
     <!-- Visualize list   -->
-    <string name="check_list_with_images">Check list with images</string>
+    <string name="check_list_with_camera">Check list (camera)</string>
+    <string name="check_list_with_images">Check list (images)</string>
     <string name="no_items">This list has no items. To add a new item, go to Home -> Modify list. </string>
     <string name="error_with_existing_list">There was an error with the selected list. List seems to be inexistent. </string>
 

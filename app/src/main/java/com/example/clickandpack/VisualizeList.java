@@ -5,10 +5,12 @@ import static database_handler.AppDatabase.DB_NAME;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.util.Pair;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -16,10 +18,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import database_handler.AppDatabase;
-import database_handler.ItemEntity;
 import database_handler.ItemWithStatus;
 import database_handler.ListEntity;
 
@@ -29,6 +32,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private List<ItemWithStatus> itemsWithStatus = null ;
     private String response = "";
     public static final String RESPONSE_KEY_FROM_IMAGE_CHECKER = "response-checker";
+    public static final String RESPONSE_DETECTED_LABELS_FROM_IMAGE_CHECKER = "detected-labels";
 
     private int REQUEST_CODE_CHECK_LIST_WITH_IMAGES = 4;
 
@@ -56,7 +60,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         // Execute setInitialGUI() on the main thread
         runOnUiThread(() ->  setInitialGUI());
 
-        findViewById(R.id.button_checkListWithImages).setOnClickListener(view -> checkListWithImages());
+        findViewById(R.id.button_checkListWithCamera).setOnClickListener(view -> checkListWithImages());
         findViewById(R.id.floatingActionButton_backToHome).setOnClickListener(view -> backToHome());
 
 
@@ -86,7 +90,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
     private void checkListWithImages(){
         // TODO check lista items non vuota + check almeno 1 item e' detectable + permessi fotocamera
-        Intent i = new Intent(getApplicationContext(), CheckListWithImages.class);
+        Intent i = new Intent(getApplicationContext(), CheckListWithCamera.class);
         startActivityForResult(i,REQUEST_CODE_CHECK_LIST_WITH_IMAGES);
 
     }
@@ -102,6 +106,33 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
             if (!textToShow.equals(""))
                 Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
+
+            // Retrieve ids of detected objects
+            ArrayList<String> detectedItemsId = data.getExtras().getStringArrayList(RESPONSE_DETECTED_LABELS_FROM_IMAGE_CHECKER);
+            String allDetectedItemsLabels = "No items found";   // TODO metti string
+            if (detectedItemsId != null )
+                allDetectedItemsLabels = detectedItemsId.stream()
+                    .collect(Collectors.joining("\n"));
+
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("Dialog Title"); // Set the title of the dialog
+            builder.setMessage("Items to add: \n" + allDetectedItemsLabels); // Set the message of the dialog
+            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Code to handle OK button click
+                    dialog.dismiss(); // Dismiss the dialog
+                }
+            });
+            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                @Override
+                public void onClick(DialogInterface dialog, int which) {
+                    // Code to handle Cancel button click
+                    dialog.dismiss(); // Dismiss the dialog
+                }
+            });
+            AlertDialog dialog = builder.create(); // Create the dialog
+            dialog.show(); // Show the dialog
 
         }
     }

@@ -23,6 +23,6 @@
         android:bottomLeftRadius="0dp" />
     <stroke
         android:width="4dp"
-        android:color="#FF0000" />
+        android:color="#FFFF00" />
     <solid android:color="@android:color/transparent"/>
 </shape>
