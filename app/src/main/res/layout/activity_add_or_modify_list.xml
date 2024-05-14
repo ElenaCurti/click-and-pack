@@ -67,7 +67,7 @@
         android:layout_height="0dp"
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
-        app:layout_constraintBottom_toTopOf="@+id/button_cancelChanges"
+        app:layout_constraintBottom_toTopOf="@+id/button_saveChanges"
         app:layout_constraintEnd_toEndOf="@+id/editTextText_newItemName"
         app:layout_constraintStart_toStartOf="@+id/editText_listName"
         app:layout_constraintTop_toBottomOf="@+id/editTextText_newItemName" />
@@ -103,36 +103,36 @@
         android:id="@+id/button_deleteList"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginEnd="10dp"
+        android:layout_marginEnd="5dp"
         android:text="@string/delete_list_title"
-        app:layout_constraintBottom_toBottomOf="@+id/button_cancelChanges"
-        app:layout_constraintEnd_toStartOf="@+id/button_cancelChanges"
-        app:layout_constraintStart_toStartOf="@+id/listView_itemsRemove"
-        app:layout_constraintTop_toTopOf="@+id/button_cancelChanges" />
-
-    <Button
-        android:id="@+id/button_cancelChanges"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="1dp"
-        android:layout_marginTop="20dp"
-        android:layout_marginBottom="20dp"
-        android:text="@string/cancel_changes"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/button_saveChanges"
         app:layout_constraintEnd_toStartOf="@+id/button_saveChanges"
-        app:layout_constraintStart_toEndOf="@+id/button_deleteList"
-        app:layout_constraintTop_toBottomOf="@+id/listView_itemsRemove" />
+        app:layout_constraintStart_toStartOf="@+id/listView_itemsRemove"
+        app:layout_constraintTop_toTopOf="@+id/button_saveChanges" />
 
     <Button
         android:id="@+id/button_saveChanges"
         android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginStart="10dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
         android:text="@string/save_changes_title"
-        app:layout_constraintBottom_toBottomOf="@+id/button_cancelChanges"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/button_cancelChanges"
+        app:layout_constraintStart_toEndOf="@+id/button_deleteList"
+        app:layout_constraintTop_toBottomOf="@+id/listView_itemsRemove" />
+
+    <Button
+        android:id="@+id/button_cancelChanges"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginStart="5dp"
+        android:text="@string/cancel_changes"
+        app:layout_constraintBottom_toBottomOf="@+id/button_saveChanges"
         app:layout_constraintEnd_toEndOf="@+id/listView_itemsRemove"
-        app:layout_constraintStart_toEndOf="@+id/button_cancelChanges"
-        app:layout_constraintTop_toTopOf="@+id/button_cancelChanges" />
+        app:layout_constraintStart_toEndOf="@+id/button_saveChanges"
+        app:layout_constraintTop_toTopOf="@+id/button_saveChanges" />
 
 
 

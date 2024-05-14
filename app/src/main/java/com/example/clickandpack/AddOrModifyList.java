@@ -93,7 +93,8 @@ public class AddOrModifyList extends AppCompatActivity {
         allDetectableItems = appDatabase.itemDao().getAllDetectableItems();
 
         // Set GUI
-        setInitialGUI(operation);
+        runOnUiThread( () -> setInitialGUI(operation));
+
     }
 
     private void saveChangesAndFinish(){

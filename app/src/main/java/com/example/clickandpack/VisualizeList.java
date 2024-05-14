@@ -5,9 +5,12 @@ import static database_handler.AppDatabase.DB_NAME;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
+import android.app.AlertDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -17,9 +20,9 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import database_handler.AppDatabase;
+import database_handler.ItemEntity;
 import database_handler.ItemWithStatus;
 import database_handler.ListEntity;
 
@@ -30,8 +33,11 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private String response = "";
     public static final String RESPONSE_KEY_FROM_IMAGE_CHECKER = "response-checker";
     public static final String RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER = "detected-indexes";
-
     private int REQUEST_CODE_CHECK_LIST_WITH_IMAGES = 4;
+
+    private List<ItemEntity> itemsPackedWithImages;
+    private int numberOfItemsInListDetectableByImages ;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,11 +45,12 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         setContentView(R.layout.activity_visualize_list);
 
         Intent i = getIntent();
-        String idList = i.getStringExtra(MainActivity.ID_LIST);
+        Long idList = Long.parseLong(i.getStringExtra(MainActivity.ID_LIST));
+        Log.d("visualize_list", "sono in onCreate. questo e il mio id:" + idList);
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
-                readDatabase(Long.parseLong(idList));
+                readDatabase(idList);
             }
         });
 
@@ -57,11 +64,10 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
         // Execute setInitialGUI() on the main thread, otherwise an exception
         // will be thrown when trying to modify the view
-        runOnUiThread(() ->  setInitialGUI());
+        runOnUiThread( () -> setInitialGUI() );
 
         findViewById(R.id.button_checkListWithCamera).setOnClickListener(view -> checkListWithCamera());
         findViewById(R.id.floatingActionButton_backToHome).setOnClickListener(view -> backToHome());
-
 
     }
 
@@ -75,6 +81,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         initializeAppDatabase();
         listEntity = appDatabase.listDao().getListFromId(idList);
         itemsWithStatus = appDatabase.itemsInListDao().getItemsWithStatus(idList);
+        numberOfItemsInListDetectableByImages = appDatabase.itemsInListDao().countItemsInListDetectableByImages(idList);
     }
 
     private void backToHome(){
@@ -87,48 +94,33 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         finish();
     }
 
-    private void checkListWithCamera(){
-        // TODO check lista items non vuota + check almeno 1 item e' detectable + permessi fotocamera
-        Intent i = new Intent(getApplicationContext(), CheckListWithCamera.class);
-        startActivityForResult(i,REQUEST_CODE_CHECK_LIST_WITH_IMAGES);
+    private boolean checkIfObjectDetectionIsPossible(){
+
+        if (itemsWithStatus == null || itemsWithStatus.size() == 0 || numberOfItemsInListDetectableByImages < 1){
+            // TODO metti string
+            Toast.makeText(this, "To check list with images or camera it's necessary to have at least one detectable item!", Toast.LENGTH_LONG).show();
+            return false;
+        }
+        return true;
+    }
+
+    private void checkListWithCamera() {
+        if (checkIfObjectDetectionIsPossible()) {
+            Intent i = new Intent(getApplicationContext(), CheckListWithCamera.class);
+            startActivityForResult(i,REQUEST_CODE_CHECK_LIST_WITH_IMAGES);
+        }
 
     }
 
-    private void showObjectRecognitionResultAndAskConfirm(List<Long> itemsIds){
-        initializeAppDatabase();
-
-        new Thread(() -> {
-            List<String> itemsNames = appDatabase.itemDao().getNamesForIds(itemsIds);
-            String allDetectedItemsLabels = itemsNames.stream()
-                    .collect(Collectors.joining("\n"));
-
-            Log.d("items_packed_images", allDetectedItemsLabels);
+    private void checkListWithImages(){
+        if (checkIfObjectDetectionIsPossible()) {
+            // TODO
             /*
-            AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("Dialog Title"); // Set the title of the dialog
-
-
-            builder.setMessage("Items to add: \n" + allDetectedItemsLabels); // Set the message of the dialog
-            builder.setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // Code to handle OK button click
-                    dialog.dismiss(); // Dismiss the dialog
-                }
-            });
-            builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                @Override
-                public void onClick(DialogInterface dialog, int which) {
-                    // Code to handle Cancel button click
-                    dialog.dismiss(); // Dismiss the dialog
-                }
-            });
-            AlertDialog dialog = builder.create(); // Create the dialog
-            dialog.show(); // Show the dialog
-            */
-        }).start();
-
+            Intent i = new Intent(getApplicationContext(), CheckListWithCamera.class);
+            startActivityForResult(i, REQUEST_CODE_CHECK_LIST_WITH_IMAGES);*/
+        }
     }
+
 
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -159,7 +151,98 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     }
 
 
+
+    private void showObjectRecognitionResultAndAskConfirm(List<Long> itemsIds){
+        initializeAppDatabase();
+
+        if (itemsIds.size() == 0 ){
+            // todo set string
+            Toast.makeText(this, "No items selected", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        Thread t = new Thread(() -> {
+            itemsPackedWithImages = appDatabase.itemDao().getItemsFromIds(itemsIds);
+        });
+        t.start();
+
+        String stringToShow = "";
+        List<Long> commonItemIds = new ArrayList<>();
+
+        try {
+            t.join();
+
+            String commonItems = "", notCommonItems = "";
+
+            // I check which clicked items are in user list and which are not
+            for (int i = 0; i < itemsPackedWithImages.size(); i++) {
+                ItemEntity itemCheckedWithImages = itemsPackedWithImages.get(i);
+                boolean found = false;
+                for (ItemWithStatus itemInUserList : itemsWithStatus) {
+                    if (itemInUserList.item.id == itemCheckedWithImages.id) {
+                        commonItemIds.add(itemCheckedWithImages.id);
+                        found = true;
+                        break;
+                    }
+                }
+                if (found)
+                    commonItems += "\n\t- " + itemCheckedWithImages.getName();
+                else
+                    notCommonItems += "\n\t- " + itemCheckedWithImages.getName();
+            }
+
+            commonItems = commonItems.equals("") ? "" : "These items will be setted as packed: " + commonItems + ".\n";
+            notCommonItems = notCommonItems.equals("") ? "" : "\nThe following items where found but aren't in the list," +
+                    " so they will be ignored: " + notCommonItems;
+
+            stringToShow = commonItems + notCommonItems;
+
+        } catch (InterruptedException e) {
+            // TODO string
+            Toast.makeText(this,  "Error during the retain of packed items with images", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        // Ask confirmation to user
+        DialogInterface.OnClickListener alertClickListener = (dialog, which) -> {
+            if (which == -1) {
+                // If positive button was pressed, i save changes, re-load them and show them in GUI
+                Thread t2 = new Thread(() -> {
+                    for(Long idItem : commonItemIds) {
+                        appDatabase.itemsInListDao().updateItemCheckedUsingListAndItemId(listEntity.id, idItem,true);
+                    }
+                    readDatabase(listEntity.id) ;
+                });
+                t2.start();
+
+                try {
+                    t2.join();
+                } catch (InterruptedException e) {
+                    // TODO set string e eventualmente torna alla home ?
+                    Toast.makeText(this, "Error during saving or re-loadding of user list!", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
+                runOnUiThread( () -> setInitialGUI() );
+            }
+            dialog.dismiss(); // Dismiss the dialog
+        };
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Dialog Title"); // TODO setta string
+        builder.setMessage(stringToShow);
+        builder.setPositiveButton(android.R.string.ok, alertClickListener);
+        builder.setNegativeButton(android.R.string.cancel, alertClickListener);
+        builder.create().show();
+
+        itemsPackedWithImages = null;
+
+    }
+
+
+
     private void setInitialGUI(){
+
         if (listEntity == null){
             // Should never happen
             response = getString(R.string.error_with_existing_list);
@@ -171,7 +254,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         ((TextView) findViewById(R.id.textView_listDescription)).setText(listEntity.getDescription());
 
         LinearLayout linearLayoutListItems = findViewById(R.id.linearLayout_listItems);
-
+        linearLayoutListItems.removeAllViews();
 
         if (itemsWithStatus == null || itemsWithStatus.size() == 0){
             findViewById(R.id.textView_noItems).setVisibility(View.VISIBLE);

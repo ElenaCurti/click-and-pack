@@ -14,13 +14,14 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
+import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
 import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
 import object_detector.MyObjectDetector
 import object_detector.ObjectBoundingBoxView
 import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.ExecutorService
 
-class MyCameraHandler (private val viewBinding: ActivityCheckListWithImagesBinding, private val cameraExecutor: ExecutorService)  {
+class MyCameraHandler (private val viewBinding: ActivityCheckListWithCameraBinding, private val cameraExecutor: ExecutorService)  {
 
     private val CAMERA_TAG = "CAMERA_TAG";
     private val myObjDetector =  MyObjectDetector(viewBinding)

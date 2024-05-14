@@ -3,6 +3,7 @@ package object_detector
 import android.graphics.Rect
 import android.util.Log
 import androidx.camera.core.ImageProxy
+import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
 import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
 import com.google.android.gms.tasks.OnFailureListener
 import com.google.android.gms.tasks.OnSuccessListener
@@ -16,7 +17,7 @@ import java.lang.Exception
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 
-class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBinding) : OnSuccessListener<List<DetectedObject>>, OnFailureListener {
+class MyObjectDetector (private val viewBinding: ActivityCheckListWithCameraBinding) : OnSuccessListener<List<DetectedObject>>, OnFailureListener {
     private var objecteBoundingBoxView: ObjectBoundingBoxView = viewBinding.objectBoundingBoxView
     private val imageDetector: ObjectDetector
     private var width : Int = -1
@@ -50,12 +51,13 @@ class MyObjectDetector (private val viewBinding: ActivityCheckListWithImagesBind
             .setAssetFilePath("custom_object_detector/object_detector.tflite")
             .build()
 
+        // STREAM_MODE is necessary for camera
         val customObjectDetectorOptions =
             CustomObjectDetectorOptions.Builder(localModel)
                 .setDetectorMode(CustomObjectDetectorOptions.STREAM_MODE)
                 .enableClassification()
                 .setClassificationConfidenceThreshold(0.6f)
-                .setMaxPerObjectLabelCount(2)
+                .setMaxPerObjectLabelCount(3)
                 //.enableMultipleObjects()
                 .build()
 

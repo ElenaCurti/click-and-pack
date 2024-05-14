@@ -45,6 +45,14 @@ public interface ItemsInListDAO {
     void updateItemChecked(long itemId, boolean isChecked);
 
 
+    @Query("UPDATE items_in_list SET isChecked = :isChecked WHERE listId = :listId AND itemId = :itemId")
+    void updateItemCheckedUsingListAndItemId(long listId, long itemId, boolean isChecked);
+
+    @Query("SELECT COUNT(*) FROM items_in_list " +
+            "INNER JOIN items ON items_in_list.itemId = items.id " +
+            "WHERE items_in_list.listId = :listId AND items.isDetectableByImages = 1")
+    int countItemsInListDetectableByImages(long listId);
+
 
 }
 
