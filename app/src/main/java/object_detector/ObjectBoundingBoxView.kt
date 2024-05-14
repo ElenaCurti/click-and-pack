@@ -11,7 +11,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
-import object_detector.MyObjectDetector.Companion.SEPARATOR_LABEL
+import object_detector.MyObjectDetectorCamera.Companion.SEPARATOR_LABEL
 import java.util.concurrent.ConcurrentSkipListSet
 
 

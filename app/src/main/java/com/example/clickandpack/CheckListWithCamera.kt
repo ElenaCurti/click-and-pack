@@ -13,7 +13,6 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.room.Room
 import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
-import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
 import database_handler.AppDatabase
 import database_handler.ItemEntity
 import java.util.concurrent.ConcurrentSkipListSet

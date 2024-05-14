@@ -3,28 +3,22 @@ package com.example.clickandpack;
 
 
 import android.util.Log
-import android.view.View
-import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageProxy
 
 
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
 import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
-import com.example.clickandpack.databinding.ActivityCheckListWithImagesBinding
-import object_detector.MyObjectDetector
-import object_detector.ObjectBoundingBoxView
-import java.util.concurrent.ConcurrentSkipListSet
+import object_detector.MyObjectDetectorCamera
 import java.util.concurrent.ExecutorService
-
+// TODO fai classe unica per mycamera handler e checklist with camera
 class MyCameraHandler (private val viewBinding: ActivityCheckListWithCameraBinding, private val cameraExecutor: ExecutorService)  {
 
     private val CAMERA_TAG = "CAMERA_TAG";
-    private val myObjDetector =  MyObjectDetector(viewBinding)
+    private val myObjDetector =  MyObjectDetectorCamera(viewBinding)
 
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     fun  startCameraView(mainActivity: AppCompatActivity, idListOfDetectableItems: Set<Long>){
