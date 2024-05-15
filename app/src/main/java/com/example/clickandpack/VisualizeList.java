@@ -16,7 +16,6 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -29,7 +28,7 @@ import com.google.mlkit.vision.common.InputImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import database_handler.AppDatabase;
 import database_handler.ItemEntity;
@@ -49,8 +48,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private List<ItemEntity> itemsPackedWithImages;
     private int numberOfItemsInListDetectableByImages ;
     private static final int STORAGE_PERMISSION_CODE = 1;
-    private static final int PICK_IMAGE_REQUEST_SINGLE = 1;
+    private static final int PICK_IMAGE_REQUEST = 1;
 
+    private CopyOnWriteArrayList<Uri> urisOfImagesChosenByUser;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -143,61 +143,15 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         }
     }
 
-    private void checkListWithChosenImage(Uri imageUri){
-        InputImage image;
-        try {
-            image = InputImage.fromFilePath(this, imageUri);
-        } catch (IOException e) {
-            // TODO handle
-            return;
-        }
-
+    private void checkListWithChosenImage(){
         MyObjectDetectorStillImages objectDetectorStillImages = new MyObjectDetectorStillImages( mapResult -> {
-            // Found result
-            // TODO
-            Log.d("images", "sono qui");
+            // Callback with found result
             List<Long> idsFound = new ArrayList<>(mapResult.keySet());
             showObjectRecognitionResultAndAskConfirm(idsFound);
-
-            /*AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            LayoutInflater inflater = getLayoutInflater();
-            View dialogView = inflater.inflate(R.layout.dialog_layout, null);
-            LinearLayout ll = dialogView.findViewById(R.id.linearLayout_dialogView);
-            for (Map.Entry<Long, String> entry : mapResult.entrySet()) {
-                Long idItem = entry.getKey();
-                String nameItem = entry.getValue();
-
-                MyCheckBox c = new MyCheckBox(this);
-                c.setText(nameItem);
-                c.setTag(idItem);
-
-                ll.addView(c);
-            }
-            // You can set the checkbox state or listen to its events here
-            builder.setView(dialogView)
-                    .setTitle("Found items")    // todo string
-                    .setMessage("This objects were found and will be set as ")
-                    .setPositiveButton("OK", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // Handle OK button click
-
-                        }
-                    })
-                    .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
-                        @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            // Handle Cancel button click
-                            dialog.dismiss();
-                        }
-                    });
-            AlertDialog alertDialog = builder.create();
-            alertDialog.show();
-*/
             return null;
         });
 
-        objectDetectorStillImages.processImage(image);
+        objectDetectorStillImages.processImages(this, urisOfImagesChosenByUser);
 
     }
 
@@ -211,18 +165,14 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 ActivityCompat.requestPermissions(this,
                         new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
                         STORAGE_PERMISSION_CODE);
-                return;
             } else {
                 // Permission is already granted, I ask user to choose photo
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
-                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false);
-                // TODO select picture in string
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST_SINGLE);
-
-
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                // TODO select picture mettilo in string
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
             }
-
         }
     }
 
@@ -232,9 +182,31 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         super.onActivityResult(requestCode, resultCode, data);
 
         // User has selected an image to process
-        if (requestCode == PICK_IMAGE_REQUEST_SINGLE && resultCode == RESULT_OK && data != null) {
-            Uri selectedImageUri = data.getData();
-            checkListWithChosenImage(selectedImageUri);
+        if (requestCode == PICK_IMAGE_REQUEST) {
+            if (resultCode != RESULT_OK || data == null) {
+                // TODO set string
+                Toast.makeText(this, "no image selected", Toast.LENGTH_LONG).show();
+                return;
+            }
+            urisOfImagesChosenByUser = new CopyOnWriteArrayList<>();
+
+            if (data.getClipData() != null) {
+                Log.d("no_image", "data.getClipData != null");
+                // Multiple images selected
+                int count = data.getClipData().getItemCount();
+                for (int i = 0; i < count; i++) {
+                    Uri imageUri = data.getClipData().getItemAt(i).getUri();
+                    urisOfImagesChosenByUser.add(imageUri);
+                }
+            } else if (data.getData() != null) {
+                // Single image selected
+                Log.d("no_image", "data.getData != null");
+                Uri imageUri = data.getData();
+                urisOfImagesChosenByUser.add(imageUri);
+            }
+
+            checkListWithChosenImage();
+            urisOfImagesChosenByUser = null;
             return;
         }
 
@@ -248,13 +220,12 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             // Retrieve ids of detected objects
             ArrayList<Integer> detectedItemsIndexes = data.getExtras().getIntegerArrayList(RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER);
             if (detectedItemsIndexes == null ) {
-                // TODO "No items packed";   // TODO metti string
+                // TODO "No items packed", ma probabilmente impossibile;   // TODO metti string
             } else {
                 List<Long> longList = new ArrayList<>();
                 for (Integer integer : detectedItemsIndexes) {
                     longList.add(integer.longValue());
                 }
-
                 showObjectRecognitionResultAndAskConfirm(longList);
             }
 
@@ -266,9 +237,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private void showObjectRecognitionResultAndAskConfirm(List<Long> itemsIds){
         initializeAppDatabase();
 
-        if (itemsIds.size() == 0 ){
-            // todo set string e scrivi una cosa generica sia per check camera sia per check images
-            Toast.makeText(this, "No item is set as packed", Toast.LENGTH_LONG).show();
+        if (itemsIds == null || itemsIds.size() == 0 ){
+            // todo  scrivi una cosa generica sia per check camera sia per check images + set string
+            Toast.makeText(this, "No item was recognised and set as packed", Toast.LENGTH_LONG).show();
             return;
         }
 

@@ -119,6 +119,7 @@ public class AddOrModifyList extends AppCompatActivity {
             } else {
                 // Update exsisting name and description
                 appDatabase.listDao().updateListNameAndDescription(listEntity.id, newName, newdescription);
+                // TODO questo e' sbagliato. gli item gia' in valigia non devono essere modificati
                 appDatabase.itemsInListDao().deleteItemsInListByListId(listEntity.id);
 
                 response = getString(R.string.list_update_ok);
