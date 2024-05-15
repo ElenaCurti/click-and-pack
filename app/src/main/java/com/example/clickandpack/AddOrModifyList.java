@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,7 +23,9 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import database_handler.AppDatabase;
 import database_handler.ItemEntity;
@@ -109,6 +112,7 @@ public class AddOrModifyList extends AppCompatActivity {
             // run() method content:
             initializeAppDatabase();
             String newdescription = ((TextView) findViewById(R.id.editText_listDescription)).getText().toString();
+            Set<Long> idAlreadyInDB = new HashSet<>();
 
             if (listEntity == null) {
                 // User wants to create a new list
@@ -119,28 +123,46 @@ public class AddOrModifyList extends AppCompatActivity {
             } else {
                 // Update exsisting name and description
                 appDatabase.listDao().updateListNameAndDescription(listEntity.id, newName, newdescription);
-                // TODO questo e' sbagliato. gli item gia' in valigia non devono essere modificati
-                appDatabase.itemsInListDao().deleteItemsInListByListId(listEntity.id);
+
+                for (ItemEntity ie: listEntity.itemsInList){
+                    idAlreadyInDB.add(ie.id);
+                }
 
                 response = getString(R.string.list_update_ok);
             }
 
+            Set<Long> tmpIdItemsNowInList = new HashSet<Long>();
             for (String itemIdAndName : itemsInTheList) {
                 int index = itemIdAndName.indexOf(ID_AND_NAME_SEPERATOR);
                 long idItem = Long.parseLong(itemIdAndName.substring(0, index));
-                String nameItem = itemIdAndName.substring(index + 1);
+                tmpIdItemsNowInList.add(idItem);
 
-                if (idItem == -1) {
-                    // New item creation
-                    ItemEntity item1 = new ItemEntity(nameItem, false);
-                    item1.id = appDatabase.itemDao().insertItem(item1);
-                    idItem = item1.id;
+                // If id of newly-added item is not contained in list of already memorized items, I add it
+                // This check is made so that if an item is already in DB, its "status" (isChecked)
+                // is not resetted every time user perform changes in the list
+                if (!idAlreadyInDB.contains(idItem)) {
+                    if (idItem == -1) {
+                        // New item creation
+                        String nameItem = itemIdAndName.substring(index + 1);
+                        ItemEntity item1 = new ItemEntity(nameItem, false);
+                        item1.id = appDatabase.itemDao().insertItem(item1);
+                        idItem = item1.id;
+                    }
+                    // Insert new item in the list
+                    ItemsInList itemsInList1 = new ItemsInList(listEntity.getId(), idItem, false);
+                    itemsInList1.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList1);
                 }
-
-                // Insert new item in the list
-                ItemsInList itemsInList1 = new ItemsInList(listEntity.getId(), idItem, false);
-                itemsInList1.id = appDatabase.itemsInListDao().insertItemsInList(itemsInList1);
             }
+
+            // Possibly remove newly removed items (aka items that are in db, but are not in visualized
+            // list, because user removed it
+            for(Long idMemorizedInDB : idAlreadyInDB) {
+                if (!tmpIdItemsNowInList.contains(idMemorizedInDB)) {
+                    appDatabase.itemsInListDao().deleteItemsInListByListIdAndItemId(listEntity.id, idMemorizedInDB);
+                }
+            }
+
+
             finish();
         }).start();
     }

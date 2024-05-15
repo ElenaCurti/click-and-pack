@@ -9,7 +9,6 @@ public class ItemsInList {
 
     @PrimaryKey(autoGenerate = true)
     public long id;
-
     private long listId;
     private long itemId;
     private boolean isChecked;
@@ -19,7 +18,6 @@ public class ItemsInList {
         this.itemId = itemId;
         this.isChecked = isChecked;
     }
-
 
     public long getListId(){
         return listId;
@@ -32,8 +30,6 @@ public class ItemsInList {
     public boolean getIsChecked() {
         return isChecked;
     }
-
-
 
     @NonNull
     @Override

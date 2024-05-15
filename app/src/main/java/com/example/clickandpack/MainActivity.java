@@ -1,14 +1,12 @@
 package com.example.clickandpack;
 
 import static database_handler.AppDatabase.DB_NAME;
-import static database_handler.MyDatabaseInitiator.populateDB;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,8 +22,6 @@ import java.util.Collections;
 import java.util.List;
 
 import database_handler.AppDatabase;
-import database_handler.ItemEntity;
-import database_handler.ItemsInList;
 import database_handler.ListEntity;
 
 public class MainActivity extends AppCompatActivity {
@@ -71,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(() -> {
             initializeAppDatabase();
-            //populateDB(this, appDatabase); // TODO da rimuovere
+            // resetAndPopulateDB(this, appDatabase);
             userLists = appDatabase.listDao().getAllLists();
         });
         t.start();
@@ -156,11 +152,9 @@ public class MainActivity extends AppCompatActivity {
                 FloatingActionButton buttonVisualizza = view.findViewById(R.id.floatingActionButton_visualizza);
                 buttonVisualizza.setTag(id);
                 buttonVisualizza.setOnClickListener(v -> {
-                    // TODO
                     Intent i = new Intent(getApplicationContext(), VisualizeList.class);
                     i.putExtra(ID_LIST,  "" + v.getTag());
                     startActivityForResult(i,REQUEST_CODE_VISUALIZE_LIST);
-                    //Toast.makeText(getApplicationContext(), "Id: " + v.getTag() + "  Tipo: visualizza" , Toast.LENGTH_SHORT).show();
                 });
 
                 FloatingActionButton buttonModifica = view.findViewById(R.id.floatingActionButton_modifica);

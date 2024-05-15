@@ -125,8 +125,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
     private boolean checkIfObjectDetectionIsPossible(){
         if (itemsWithStatus == null || itemsWithStatus.size() == 0 || numberOfItemsInListDetectableByImages < 1){
-            // TODO metti string
-            Toast.makeText(this, "To check list with images or camera it's necessary to have at least one detectable item!", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.necessary_at_least_one_detectable_item), Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
@@ -147,8 +146,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
                 intent.setType("image/*");
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                // TODO select picture mettilo in string
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CODE_PICK_IMAGES);
+                startActivityForResult(Intent.createChooser(intent, getString(R.string.select_images)), REQUEST_CODE_PICK_IMAGES);
             }
         }
     }
@@ -161,11 +159,10 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         if (requestCode == STORAGE_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Permission is granted. Proceed with your logic here
-                askUserToChoseImageForObjectDetection(); // TODO altro ?
+                askUserToChoseImageForObjectDetection();
             } else {
                 // Permission is denied
-                // TODO metti string
-                Toast.makeText(this, "Permission is necessary to read images!", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.storage_permission_denied_error), Toast.LENGTH_LONG).show();
             }
         }
     }
@@ -180,8 +177,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         // User has selected an image to process
         if (requestCode == REQUEST_CODE_PICK_IMAGES) {
             if (resultCode != RESULT_OK || data == null) {
-                // TODO set string
-                Toast.makeText(this, "no image selected", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, getString(R.string.no_image_selected), Toast.LENGTH_LONG).show();
                 return;
             }
             CopyOnWriteArrayList<Uri> urisOfImagesChosenByUser = new CopyOnWriteArrayList<>();
@@ -220,7 +216,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             // Retrieve ids of detected objects
             ArrayList<Integer> detectedItemsIndexes = data.getExtras().getIntegerArrayList(RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER);
             if (detectedItemsIndexes == null ) {
-                // TODO "No items packed", ma probabilmente impossibile;   // TODO metti string
+                Toast.makeText(this, getString(R.string.no_item_packed_from_images) , Toast.LENGTH_LONG).show();
             } else {
                 List<Long> longList = new ArrayList<>();
                 for (Integer integer : detectedItemsIndexes) {
@@ -235,10 +231,16 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         initializeAppDatabase();
 
         if (itemsIds == null || itemsIds.size() == 0 ){
-            // todo  scrivi una cosa generica sia per check camera sia per check images + set string
-            Toast.makeText(this, "No item was recognised nor set as packed", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, getString(R.string.no_item_packed_from_images), Toast.LENGTH_LONG).show();
             return;
         }
+
+        if (itemsIds.contains(-1L)) {
+            Toast.makeText(this, getString(R.string.error_in_processing_object_detector), Toast.LENGTH_LONG).show();
+            if (itemsIds.size() == 1)
+                return;
+        }
+
 
         // Retrieve names of detected objects
         Thread t = new Thread(() -> {
@@ -271,15 +273,13 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                     notCommonItems += "\n\t- " + itemCheckedWithImages.getName();
             }
 
-            commonItems = commonItems.equals("") ? "" : "These items will be setted as packed: " + commonItems + ".\n";
-            notCommonItems = notCommonItems.equals("") ? "" : "\nThe following items where found but aren't in the list," +
-                    " so they will be ignored: " + notCommonItems;
+            commonItems = commonItems.equals("") ? "" : getString(R.string.items_set_as_packed) + commonItems + ".\n";
+            notCommonItems = notCommonItems.equals("") ? "" : "\n" + getString(R.string.items_found_but_ignored) + notCommonItems;
 
             stringToShow = commonItems + notCommonItems;
 
         } catch (InterruptedException e) {
-            // TODO string
-            Toast.makeText(this,  "Error during the retain of packed items with images", Toast.LENGTH_LONG).show();
+            Toast.makeText(this,  getString(R.string.error_packed_items), Toast.LENGTH_LONG).show();
             return;
         }
 
@@ -298,9 +298,8 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 try {
                     t2.join();
                 } catch (InterruptedException e) {
-                    // TODO set string e eventualmente torna alla home ?
-                    Toast.makeText(this, "Error during saving or re-loadding of user list!", Toast.LENGTH_LONG).show();
-                    return;
+                    response = getString(R.string.error_saving_re_loading);
+                    backToHome();
                 }
 
                 runOnUiThread( () -> setInitialGUI() );
@@ -309,7 +308,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         };
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Dialog Title"); // TODO setta string
+        builder.setTitle(getString(R.string.packed_items_with_images_confirmation));
         builder.setMessage(stringToShow);
         builder.setPositiveButton(android.R.string.ok, alertClickListener);
         builder.setNegativeButton(android.R.string.cancel, alertClickListener);
@@ -346,7 +345,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         for (int i = 0; i < itemsWithStatus.size(); i++) {
             ItemWithStatus item_status = itemsWithStatus.get(i);
 
-            CheckBox checkBox = new MyCheckBox(this);
+            CheckBox checkBox = new CheckBox(this);
+            checkBox.setTextSize(20);
+            checkBox.setPadding(0, 15, 0, 15);
             checkBox.setText(item_status.item.getName());
             checkBox.setTag(item_status.items_in_list_id);
             checkBox.setChecked(item_status.isChecked);

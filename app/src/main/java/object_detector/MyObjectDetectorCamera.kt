@@ -26,6 +26,8 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
     private var width : Int = -1
     private var height : Int = -1
 
+    private var  errorDuringProcessingOfCamera : Boolean = false
+
     companion object {
         // Separator between one label and another
         const val SEPARATOR_LABEL = "\n"
@@ -69,6 +71,8 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
         for (key in clickedTrackingIds) {
             mapTrackedIdToIndex[key]?.let { valuesForClickedKeys.addAll(it) }
         }
+        if (errorDuringProcessingOfCamera)
+            valuesForClickedKeys.add(-1)
         return valuesForClickedKeys
     }
 
@@ -140,7 +144,8 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
 
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
-        Log.d("RESULT_IMAGE_LAB", "error:" + e.message);
+        errorDuringProcessingOfCamera = true
+        Log.d("MyObjectDetectorCamera", "error:" + e.message);
     }
 
 

@@ -10,8 +10,6 @@ import java.util.List;
 
 @Dao
 public interface ListDAO {
-
-
     @Insert
     long insertList(ListEntity list);
 
@@ -32,21 +30,4 @@ public interface ListDAO {
     @Query("DELETE FROM lists WHERE id = :listId")
     void deleteListById(long listId);
 
-
-
-    /*
-    @Query("SELECT * FROM lists WHERE nome IN (:nomi)")
-    List<ListEntity> findByName(String[] nomi);
-
-    @Query("SELECT * FROM ListEntity  ORDER BY media_attuale DESC")
-    List<ListEntity> ordinaStudenti();
-
-    @Insert
-    void insertAll(ListEntity... studenti);
-
-    @Delete
-    void delete(ListEntity user);
-
-    @Query("DELETE FROM ListEntity")
-    void cancellaDB();*/
 }

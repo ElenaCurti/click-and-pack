@@ -16,8 +16,6 @@ public interface ItemDAO {
     @Query("UPDATE items SET id = :newId WHERE id = :oldId")
     void updateItemId(long oldId, long newId);
 
-
-
     @Query("DELETE FROM items")
     void deleteAllItems();
 

@@ -9,7 +9,7 @@ import java.util.List;
 public class ListEntity {
 
     @PrimaryKey(autoGenerate = true)
-    public long id;     // TODO set to private!
+    public long id;
     private String name;
     private String description;
 
@@ -22,7 +22,6 @@ public class ListEntity {
         this.description = description;
     }
 
-    // Getters
     public long getId() {
         return id;
     }

@@ -55,6 +55,11 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
             imageDetector.process(image)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this)
+                .addOnCompleteListener {
+                    numberOfAlreadyProcessedImages++
+                    if (numberOfAlreadyProcessedImages == numberOfImagesToProcess)
+                        callbackResult.invoke(resultMap.keys().toList())
+                }
         }
     }
 
@@ -66,16 +71,13 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
                 }
             }
         }
-        numberOfAlreadyProcessedImages++
-        if (numberOfAlreadyProcessedImages == numberOfImagesToProcess)
-            callbackResult.invoke(resultMap.keys().toList())
     }
 
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
         Log.d("RESULT_IMAGE_LAB", "error:" + e.message);
-        resultMap[-1L] = "Error with image processing"  // TODO string + handle this case
-        callbackResult.invoke(resultMap.keys().toList())
+        resultMap[-1L] = "-"  // TODO test if works
+
 
     }
 

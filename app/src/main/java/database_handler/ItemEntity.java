@@ -8,7 +8,7 @@ import androidx.room.PrimaryKey;
 public class ItemEntity {
 
     @PrimaryKey(autoGenerate = true)
-    public long id;     // TODO set to private
+    public long id;
     private String name;
     private boolean isDetectableByImages;
 

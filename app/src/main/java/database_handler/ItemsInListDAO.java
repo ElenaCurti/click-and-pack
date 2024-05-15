@@ -34,6 +34,9 @@ public interface ItemsInListDAO {
     @Query("DELETE FROM items_in_list WHERE listId = :listId")
     void deleteItemsInListByListId(long listId);
 
+    @Query("DELETE FROM items_in_list WHERE listId = :listId AND itemId = :itemId")
+    void deleteItemsInListByListIdAndItemId(long listId, long itemId);
+
     @Query("SELECT items.*, isChecked, items_in_list.id AS items_in_list_id " +
             "FROM items_in_list " +
             "INNER JOIN items ON items_in_list.itemId = items.id " +

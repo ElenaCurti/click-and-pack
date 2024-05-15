@@ -41,5 +41,15 @@
     <string name="object_detector_unknown_object">Unknown object</string>
     <string name="object_detector_info">Click on a detected item to mark it as packed.</string>
 
-
+    <string name="necessary_at_least_one_detectable_item">To check list with images or camera it\'s necessary to have at least one detectable item!</string>
+    <string name="select_images">Select Picture</string>
+    <string name="storage_permission_denied_error">Permission is necessary to read images!</string>
+    <string name="no_image_selected">No image selected</string>
+    <string name="no_item_packed_from_images">No item was recognised or set as packed</string>
+    <string name="items_set_as_packed">These items will be setted as packed: </string>
+    <string name="items_found_but_ignored">The following items where found but aren\'t in the list, so they will be ignored: </string>
+    <string name="error_packed_items">Error during the retain of packed items with images</string>
+    <string name="error_saving_re_loading">Error during saving or re-loadding of user list!</string>
+    <string name="error_in_processing_object_detector">There was an error during the object detection of one or more images!</string>
+    <string name="packed_items_with_images_confirmation">Confirm items to be setted as packed</string>
 </resources>
