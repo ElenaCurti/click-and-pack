@@ -23,9 +23,6 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.mlkit.vision.common.InputImage;
-
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -37,20 +34,34 @@ import database_handler.ListEntity;
 import object_detector.MyObjectDetectorStillImages;
 
 public class VisualizeList extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
+    // Database handler
     private AppDatabase appDatabase;
+
+    // Current list which is visualized
     private ListEntity listEntity = null;
+
+    // Items in the list and their "status" (checked or not-checked)
     private List<ItemWithStatus> itemsWithStatus = null ;
-    private String response = "";
-    public static final String RESPONSE_KEY_FROM_IMAGE_CHECKER = "response-checker";
-    public static final String RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER = "detected-indexes";
-    private int REQUEST_CODE_CHECK_LIST_WITH_CAMERA = 4;
 
+    // List of items (recognised with images) that were packed
     private List<ItemEntity> itemsPackedWithImages;
-    private int numberOfItemsInListDetectableByImages ;
-    private static final int STORAGE_PERMISSION_CODE = 1;
-    private static final int PICK_IMAGE_REQUEST = 1;
 
-    private CopyOnWriteArrayList<Uri> urisOfImagesChosenByUser;
+    // Number of items that are in the list and are detectable by images
+    private int numberOfItemsInListDetectableByImages ;
+
+    // Response to send to MainActivity
+    private String response = "";
+
+    // Key for message received from the camera object recognition
+    public static final String RESPONSE_KEY_FROM_CAMERA_CHECKER = "response-checker";
+
+    // Key for ids of detected items by camera
+    public static final String RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER = "detected-indexes";
+
+    private static final int REQUEST_CODE_CHECK_LIST_WITH_CAMERA = 4;
+    private static final int REQUEST_CODE_PICK_IMAGES = 1;
+    private static final int STORAGE_PERMISSION_CODE = 1;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -79,7 +90,12 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         // will be thrown when trying to modify the view
         runOnUiThread( () -> setInitialGUI() );
 
-        findViewById(R.id.button_checkListWithCamera).setOnClickListener(view -> checkListWithCamera());
+        findViewById(R.id.button_checkListWithCamera).setOnClickListener(view -> {
+            if (checkIfObjectDetectionIsPossible()) {
+                Intent intentCheckListWithCamera = new Intent(getApplicationContext(), CheckListWithCamera.class);
+                startActivityForResult(intentCheckListWithCamera, REQUEST_CODE_CHECK_LIST_WITH_CAMERA);
+            }
+        });
         findViewById(R.id.button_checkListWithImages).setOnClickListener(view -> askUserToChoseImageForObjectDetection());
         findViewById(R.id.floatingActionButton_backToHome).setOnClickListener(view -> backToHome());
 
@@ -108,51 +124,12 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     }
 
     private boolean checkIfObjectDetectionIsPossible(){
-
         if (itemsWithStatus == null || itemsWithStatus.size() == 0 || numberOfItemsInListDetectableByImages < 1){
             // TODO metti string
             Toast.makeText(this, "To check list with images or camera it's necessary to have at least one detectable item!", Toast.LENGTH_LONG).show();
             return false;
         }
         return true;
-    }
-
-    private void checkListWithCamera() {
-        if (checkIfObjectDetectionIsPossible()) {
-            Intent i = new Intent(getApplicationContext(), CheckListWithCamera.class);
-            startActivityForResult(i, REQUEST_CODE_CHECK_LIST_WITH_CAMERA);
-        }
-
-    }
-
-
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == STORAGE_PERMISSION_CODE) {
-            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission is granted. Proceed with your logic here
-                askUserToChoseImageForObjectDetection(); // TODO altro ?
-            } else {
-                // Permission is denied
-                // TODO metti string
-                Toast.makeText(this, "Permission is necessary to read images!", Toast.LENGTH_LONG).show();
-            }
-        }
-    }
-
-    private void checkListWithChosenImage(){
-        MyObjectDetectorStillImages objectDetectorStillImages = new MyObjectDetectorStillImages( mapResult -> {
-            // Callback with found result
-            List<Long> idsFound = new ArrayList<>(mapResult.keySet());
-            showObjectRecognitionResultAndAskConfirm(idsFound);
-            return null;
-        });
-
-        objectDetectorStillImages.processImages(this, urisOfImagesChosenByUser);
-
     }
 
     private void askUserToChoseImageForObjectDetection(){
@@ -171,27 +148,45 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 intent.setType("image/*");
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 // TODO select picture mettilo in string
-                startActivityForResult(Intent.createChooser(intent, "Select Picture"), PICK_IMAGE_REQUEST);
+                startActivityForResult(Intent.createChooser(intent, "Select Picture"), REQUEST_CODE_PICK_IMAGES);
             }
         }
     }
 
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        // Storage permissions handling and possibly ask user to chose images for object detection
+        if (requestCode == STORAGE_PERMISSION_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission is granted. Proceed with your logic here
+                askUserToChoseImageForObjectDetection(); // TODO altro ?
+            } else {
+                // Permission is denied
+                // TODO metti string
+                Toast.makeText(this, "Permission is necessary to read images!", Toast.LENGTH_LONG).show();
+            }
+        }
+    }
 
+    // Check which activity ended:
+    //  - If picking images ended, I will start object detection in those images
+    //  - Else, if camera object recognition ended, I will display detected objects
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
         // User has selected an image to process
-        if (requestCode == PICK_IMAGE_REQUEST) {
+        if (requestCode == REQUEST_CODE_PICK_IMAGES) {
             if (resultCode != RESULT_OK || data == null) {
                 // TODO set string
                 Toast.makeText(this, "no image selected", Toast.LENGTH_LONG).show();
                 return;
             }
-            urisOfImagesChosenByUser = new CopyOnWriteArrayList<>();
+            CopyOnWriteArrayList<Uri> urisOfImagesChosenByUser = new CopyOnWriteArrayList<>();
 
             if (data.getClipData() != null) {
-                Log.d("no_image", "data.getClipData != null");
                 // Multiple images selected
                 int count = data.getClipData().getItemCount();
                 for (int i = 0; i < count; i++) {
@@ -200,19 +195,24 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 }
             } else if (data.getData() != null) {
                 // Single image selected
-                Log.d("no_image", "data.getData != null");
                 Uri imageUri = data.getData();
                 urisOfImagesChosenByUser.add(imageUri);
             }
 
-            checkListWithChosenImage();
-            urisOfImagesChosenByUser = null;
+            // Start object detection for all images
+            MyObjectDetectorStillImages objectDetectorStillImages = new MyObjectDetectorStillImages( idsFound -> {
+                // Call-back with results
+                showObjectRecognitionResultAndAskConfirm(idsFound);
+                return null;
+            });
+            objectDetectorStillImages.processImages(this, urisOfImagesChosenByUser);
+
             return;
         }
 
         // Object detection with camera ended
         if ( requestCode == REQUEST_CODE_CHECK_LIST_WITH_CAMERA &&  data != null && data.getExtras() != null) {
-            String textToShow = data.getExtras().getString(RESPONSE_KEY_FROM_IMAGE_CHECKER);
+            String textToShow = data.getExtras().getString(RESPONSE_KEY_FROM_CAMERA_CHECKER);
 
             if (!textToShow.equals(""))
                 Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
@@ -228,21 +228,19 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 }
                 showObjectRecognitionResultAndAskConfirm(longList);
             }
-
         }
     }
-
-
 
     private void showObjectRecognitionResultAndAskConfirm(List<Long> itemsIds){
         initializeAppDatabase();
 
         if (itemsIds == null || itemsIds.size() == 0 ){
             // todo  scrivi una cosa generica sia per check camera sia per check images + set string
-            Toast.makeText(this, "No item was recognised and set as packed", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "No item was recognised nor set as packed", Toast.LENGTH_LONG).show();
             return;
         }
 
+        // Retrieve names of detected objects
         Thread t = new Thread(() -> {
             itemsPackedWithImages = appDatabase.itemDao().getItemsFromIds(itemsIds);
         });
@@ -285,7 +283,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             return;
         }
 
-        // Ask confirmation to user
+        // Ask confirmation to user before setting items as "packed"
         DialogInterface.OnClickListener alertClickListener = (dialog, which) -> {
             if (which == -1) {
                 // If positive button was pressed, i save changes, re-load them and show them in GUI
@@ -307,7 +305,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
                 runOnUiThread( () -> setInitialGUI() );
             }
-            dialog.dismiss(); // Dismiss the dialog
+            dialog.dismiss();
         };
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -318,9 +316,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         builder.create().show();
 
         itemsPackedWithImages = null;
-
     }
-
 
 
     private void setInitialGUI(){
@@ -331,13 +327,14 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             backToHome();
             return;
         }
-
+        // Set name and descripion
         ((TextView) findViewById(R.id.textView_listName)).setText(listEntity.getName());
         ((TextView) findViewById(R.id.textView_listDescription)).setText(listEntity.getDescription());
 
         LinearLayout linearLayoutListItems = findViewById(R.id.linearLayout_listItems);
         linearLayoutListItems.removeAllViews();
 
+        // If in the list there are no items, I will just display a textview
         if (itemsWithStatus == null || itemsWithStatus.size() == 0){
             findViewById(R.id.textView_noItems).setVisibility(View.VISIBLE);
             return;
@@ -345,7 +342,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
         findViewById(R.id.textView_noItems).setVisibility(View.GONE);
 
-
+        // I add every item in the list in the linearview as a checkbox (with their current status)
         for (int i = 0; i < itemsWithStatus.size(); i++) {
             ItemWithStatus item_status = itemsWithStatus.get(i);
 
@@ -361,8 +358,8 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+        // Every time a checkbox is clicked, I update the database
         long idItemInList = Long.parseLong("" + buttonView.getTag());
-        //Toast.makeText(this, "view:" + buttonView.getText() + " " + buttonView.getTag(), Toast.LENGTH_LONG ).show();
         new Thread(() -> appDatabase.itemsInListDao().updateItemChecked(idItemInList, isChecked ))
                 .start();
     }

@@ -6,70 +6,40 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
-import android.view.View
-import android.window.OnBackInvokedDispatcher
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.room.Room
 import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
-import database_handler.AppDatabase
-import database_handler.ItemEntity
-import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
 class CheckListWithCamera : AppCompatActivity() {
-    private lateinit var viewBinding: ActivityCheckListWithCameraBinding
+    // Handlers for camera
     private lateinit var cameraExecutor: ExecutorService
     private lateinit var cameraManager: MyCameraHandler
 
+    // "xml" file of the view
+    private lateinit var viewBinding: ActivityCheckListWithCameraBinding
+
+    // Request code for camera permissions
     private val CAMERA_PERMISSION_REQUEST_CODE = 1
+
+    // Response in case of errors
     private var response: String = ""
-    private lateinit var idListOfDetectableItems : Set<Long>
-    private lateinit var appDatabase: AppDatabase
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         viewBinding = ActivityCheckListWithCameraBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 
-        viewBinding.floatingActionButtonBackToHome.setOnClickListener( View.OnClickListener {
+        viewBinding.floatingActionButtonBackToHome.setOnClickListener {
             backToVisualizeList()
-        } )
-
-
-        //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
-        val t = Thread {
-            appDatabase = Room.databaseBuilder(
-                applicationContext,
-                AppDatabase::class.java, AppDatabase.DB_NAME
-            ).build()
-            var listItemsTmp = appDatabase.itemDao().allDetectableItems
-            val listIdTmp =  mutableListOf<Long>()
-            for(ie : ItemEntity in listItemsTmp)
-                listIdTmp.add(ie.id)
-            idListOfDetectableItems = listIdTmp.toSet()
-
-        }
-        t.start()
-
-        // Wait for the background thread to finish
-        try {
-            t.join()
-        } catch (e: InterruptedException) {
-            e.printStackTrace()
         }
 
-        runOnUiThread {
-            startCamera()
-        }
+        runOnUiThread { startCamera() }
     }
 
-    public fun idListOfDetectableItems() : Set<Long> {
-        return idListOfDetectableItems
-    }
 
     // Camera permission and (possibly) visualization
     private fun startCamera() {
@@ -88,11 +58,10 @@ class CheckListWithCamera : AppCompatActivity() {
                 cameraExecutor = Executors.newSingleThreadExecutor()
             if (!::cameraManager.isInitialized )
                 cameraManager = MyCameraHandler(viewBinding, cameraExecutor)
-            cameraManager.startCameraView(this, idListOfDetectableItems)
+            cameraManager.startCameraView(this)
         }
     }
 
-    // Camera permission
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -107,7 +76,6 @@ class CheckListWithCamera : AppCompatActivity() {
             } else {
                 // Camera permission denied
                 response = getString(R.string.camera_permission_denied_error)
-                Log.d("TAG", response)
                 backToVisualizeList()
             }
         }
@@ -118,10 +86,10 @@ class CheckListWithCamera : AppCompatActivity() {
         backToVisualizeList()
     }
 
-    // Back to previous view
     private fun backToVisualizeList() {
+        // Back to previous view
         val i = Intent()
-        i.putExtra(VisualizeList.RESPONSE_KEY_FROM_IMAGE_CHECKER, response)
+        i.putExtra(VisualizeList.RESPONSE_KEY_FROM_CAMERA_CHECKER, response)
         if (::cameraManager.isInitialized ) {
             var listOfDetectedItems: List<Int> = cameraManager.getListOfDetectedItems()
             Log.d("Item_arrivato", "sono qui" )

@@ -12,46 +12,42 @@ import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
-import java.lang.Exception
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 
 class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCameraBinding) : OnSuccessListener<List<DetectedObject>>, OnFailureListener {
+    // Handler for coloured boxes with detected items
     private var objecteBoundingBoxView: ObjectBoundingBoxView = viewBinding.objectBoundingBoxView
-    private val imageDetector: ObjectDetector
+
+    // Object detector
+    private val objectDetector: ObjectDetector
+
+    // Images' width and height
     private var width : Int = -1
     private var height : Int = -1
 
     companion object {
+        // Separator between one label and another
         const val SEPARATOR_LABEL = "\n"
+
+        // Path to custom model
         const val CUSTOM_MODEL_PATH = "custom_object_detector/object_detector.tflite"
     }
 
+    // Label to skip because it's too generic
     private val LABEL_TO_SKIP = "Clothing"
 
-    // List of detected items' ids
-    // It's thread-safe.
-    // Expected average logarithmic time cost for the contains and add
-    private var detectedIdsItems = ConcurrentSkipListSet<Int>()
-    private var detectedLabelsItems = ConcurrentSkipListSet<String>()
-
-    private var packedTrackedIds = ConcurrentSkipListSet<Int>()
-
+    // List of detected items' ids. It's thread-safe.
     // Key is tracked id of the item. Value is the list of the object' labels' indexes
     val mapTrackedIdToIndex = ConcurrentHashMap<Int, ConcurrentSkipListSet<Int>>()
 
-    private var packedLabelsItems = ConcurrentSkipListSet<String>()
-
     init {
-        // Image Labeling
-        // val imageDetector = ImageLabeling.getClient(ImageLabelerOptions.DEFAULT_OPTIONS)
-
-        // Or object detector
+        // Object detector initiation
         val localModel = LocalModel.Builder()
             .setAssetFilePath(CUSTOM_MODEL_PATH)
             .build()
 
-        // STREAM_MODE is necessary for camera
+        // STREAM_MODE is necessary for live camera for the tracking ids
         val customObjectDetectorOptions =
             CustomObjectDetectorOptions.Builder(localModel)
                 .setDetectorMode(CustomObjectDetectorOptions.STREAM_MODE)
@@ -61,11 +57,11 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
                 //.enableMultipleObjects()
                 .build()
 
-        imageDetector = ObjectDetection.getClient(customObjectDetectorOptions)
-
+        objectDetector = ObjectDetection.getClient(customObjectDetectorOptions)
     }
 
-    fun getListOfDetectedItems(): List<Int> {
+    fun getListOfDetectedAndClickedItems(): List<Int> {
+        // Return the list of clicked (packed) items
 
         var clickedTrackingIds : ConcurrentSkipListSet<Int> = objecteBoundingBoxView.getClickedTrackingIds();
 
@@ -89,11 +85,11 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
                 height = imageProxy.height
             }
 
-            imageDetector.process(image)
+            objectDetector.process(image)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this)
                 .addOnCompleteListener {
-                    // Necessary to make cameraX work properly
+                    // Necessary lines to make cameraX work properly
                     mediaImage.close()
                     imageProxy.close()
                 }
@@ -101,19 +97,8 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
 
     }
 
-
-    fun processImage(image: InputImage){
-        if (width == -1 || height == -1){
-            width = image.width
-            height = image.height
-        }
-        imageDetector.process(image)
-            .addOnSuccessListener(this)
-            .addOnFailureListener(this)
-    }
-
     override fun onSuccess(detectedObjects: List<DetectedObject>?) {
-
+        // Callback with list of detected items
         if (detectedObjects == null || detectedObjects?.size == 0 ) {
             objecteBoundingBoxView.setNoObjectFound()
             return;
@@ -123,42 +108,33 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
         val texts = mutableListOf<String>()
 
         for (obj in detectedObjects) {
-            boundingBoxes.add(obj.boundingBox)
-
             val trackingId = obj.trackingId ?: -1  // Should never be -1
+
+            // Possibly i save the new tracked item
             mapTrackedIdToIndex.putIfAbsent(trackingId, ConcurrentSkipListSet())
 
+            // If a new label was assigned to a tracked object, i add it to the list
             obj.labels?.forEach { label ->
-                /*if (!detectedIdsItems.contains(label.index)) {
-                    // New object detected
-                    Log.d("Items_rilevati", "just found " + label.text + " with index " + label.index)
-                    detectedIdsItems.add(label.index)
-                    detectedLabelsItems.add(label.text)
-                }*/
-
-                // If a new label was assigned to a tracked object, i add it
                 var listOfIndexesForTrackedObject = mapTrackedIdToIndex[obj.trackingId]!!
                 if (!listOfIndexesForTrackedObject.contains(label.index)){
                     listOfIndexesForTrackedObject.add(label.index)
                 }
-
-
             }
+
+            // Set text and size of coloured boxes to show
             val filteredLabels = if (obj.labels.any { it.text == LABEL_TO_SKIP && obj.labels.size > 1 }) {
-                obj.labels.filterNot { it.text == LABEL_TO_SKIP }
+                obj.labels.filterNot { it.text == LABEL_TO_SKIP }   // Skip generic label
             } else {
                 obj.labels
             }
             var labelTexts = filteredLabels.joinToString(separator = SEPARATOR_LABEL) { it.text + "(" +  String.format("%.2f", it.confidence) + ")" }
-
-
             labelTexts = "" + obj.trackingId + ". " + labelTexts
-
-            Log.d("item_trovato" , "" + obj.trackingId + " - " +  labelTexts )
-
             texts.add(labelTexts)
+
+            boundingBoxes.add(obj.boundingBox)
         }
 
+        // Set coloured bounding boxes
         objecteBoundingBoxView.setMultipleBoundingBoxes(boundingBoxes, width, height, texts)
     }
 

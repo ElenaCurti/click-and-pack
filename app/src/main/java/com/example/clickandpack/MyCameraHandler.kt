@@ -20,19 +20,24 @@ class MyCameraHandler (private val viewBinding: ActivityCheckListWithCameraBindi
     private val CAMERA_TAG = "CAMERA_TAG";
     private val myObjDetector =  MyObjectDetectorCamera(viewBinding)
 
+    fun getListOfDetectedItems(): List<Int> {
+        return myObjDetector.getListOfDetectedAndClickedItems()
+    }
+
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
-    fun  startCameraView(mainActivity: AppCompatActivity, idListOfDetectableItems: Set<Long>){
+    fun  startCameraView(mainActivity: AppCompatActivity){
 
         val lineAnalyzer = ImageAnalysis.Builder()
                 .build()
                 .apply {
             setAnalyzer(cameraExecutor, ImageAnalysis.Analyzer { imageProxy ->
-                // A new image is available, object detection algorithm will start with that image
+                // A new image is available from camera, so object detection algorithm will start with that image
                 myObjDetector.processImageProxy(imageProxy)
-
             })
         }
 
+        // Starting camera and camera preview. Code found here:
+        // https://developer.android.com/media/camera/camerax/
         val cameraProviderFuture = ProcessCameraProvider.getInstance(mainActivity)
 
         // Used to bind the lifecycle of cameras to the lifecycle owner
@@ -62,13 +67,5 @@ class MyCameraHandler (private val viewBinding: ActivityCheckListWithCameraBindi
             }
 
         }, ContextCompat.getMainExecutor(mainActivity))
-
-
     }
-
-    fun getListOfDetectedItems(): List<Int> {
-        return myObjDetector.getListOfDetectedItems()
-    }
-
-
 }

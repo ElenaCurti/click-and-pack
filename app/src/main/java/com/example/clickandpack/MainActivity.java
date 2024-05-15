@@ -168,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
 
                 buttonModifica.setOnClickListener (v -> {
                     Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
+                    // TODO metti un altro extra
                     i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST + " " + v.getTag());
                     startActivityForResult(i,REQUEST_CODE_MODIFY_LIST);
                 });
