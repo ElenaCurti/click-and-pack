@@ -2,16 +2,12 @@ package com.example.clickandpack;
 
 import static database_handler.AppDatabase.DB_NAME;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.room.Room;
-
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.util.Log;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -22,10 +18,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.room.Room;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import database_handler.AppDatabase;
 import database_handler.ItemEntity;
@@ -34,16 +34,14 @@ import database_handler.ListEntity;
 
 
 public class AddOrModifyList extends AppCompatActivity {
-    private static final String TAG_LOGGER = "MyTag_AddOrModifyList";
-    private static final String ID_AND_NAME_SEPERATOR = ")";
-    // Exisiting list (if users wants to modify one)
+    // Existing list (if users wants to modify one)
     private ListEntity listEntity = null;
 
     // All items detectable by images. They will be contained in the dropdown menu
     private List<ItemEntity> allDetectableItems = null;
 
     // List of string that represent the items in the list
-    private  List<String> itemsInTheList = new ArrayList<>();
+    private  List<ItemEntity> itemsInTheList = new ArrayList<>();
 
     private AppDatabase appDatabase;
 
@@ -66,7 +64,7 @@ public class AddOrModifyList extends AppCompatActivity {
             }
         }).start();
 
-        // Set click listener of the 3 button in the bottom (delete, cancel, save)
+        // Set click listener of the 3 buttons in the bottom (delete, cancel, save)
         findViewById(R.id.button_saveChanges).setOnClickListener(view -> saveChangesAndFinish());
         findViewById(R.id.button_cancelChanges).setOnClickListener(view -> exitWithoutSaving());
         findViewById(R.id.button_deleteList).setOnClickListener(v -> {
@@ -98,7 +96,6 @@ public class AddOrModifyList extends AppCompatActivity {
 
         // Set GUI
         runOnUiThread( () -> setInitialGUI(operation));
-
     }
 
     private void saveChangesAndFinish(){
@@ -112,18 +109,18 @@ public class AddOrModifyList extends AppCompatActivity {
         new Thread(() -> {
             // run() method content:
             initializeAppDatabase();
-            String newdescription = ((TextView) findViewById(R.id.editText_listDescription)).getText().toString();
+            String newDescription = ((TextView) findViewById(R.id.editText_listDescription)).getText().toString();
             Set<Long> idAlreadyInDB = new HashSet<>();
 
             if (listEntity == null) {
                 // User wants to create a new list
-                listEntity = new ListEntity(newName, newdescription);
+                listEntity = new ListEntity(newName, newDescription);
                 listEntity.id = appDatabase.listDao().insertList(listEntity);
 
                 response = getString(R.string.list_creation_ok);
             } else {
-                // Update exsisting name and description
-                appDatabase.listDao().updateListNameAndDescription(listEntity.id, newName, newdescription);
+                // Update existing name and description
+                appDatabase.listDao().updateListNameAndDescription(listEntity.id, newName, newDescription);
 
                 for (ItemEntity ie: listEntity.itemsInList){
                     idAlreadyInDB.add(ie.id);
@@ -132,19 +129,18 @@ public class AddOrModifyList extends AppCompatActivity {
                 response = getString(R.string.list_update_ok);
             }
 
-            Set<Long> tmpIdItemsNowInList = new HashSet<Long>();
-            for (String itemIdAndName : itemsInTheList) {
-                int index = itemIdAndName.indexOf(ID_AND_NAME_SEPERATOR);
-                long idItem = Long.parseLong(itemIdAndName.substring(0, index));
+            Set<Long> tmpIdItemsNowInList = new HashSet<>();
+            for (ItemEntity ie : itemsInTheList) {
+                long idItem = ie.id;
                 tmpIdItemsNowInList.add(idItem);
 
                 // If id of newly-added item is not contained in list of already memorized items, I add it
                 // This check is made so that if an item is already in DB, its "status" (isChecked)
-                // is not resetted every time user perform changes in the list
+                // is not reset every time user perform changes in the list
                 if (!idAlreadyInDB.contains(idItem)) {
                     if (idItem == -1) {
-                        // New item creation
-                        String nameItem = itemIdAndName.substring(index + 1);
+                        // New item creation and add to DB
+                        String nameItem = ie.getName();
                         ItemEntity item1 = new ItemEntity(nameItem, false);
                         item1.id = appDatabase.itemDao().insertItem(item1);
                         idItem = item1.id;
@@ -232,7 +228,7 @@ public class AddOrModifyList extends AppCompatActivity {
 
             if ( listEntity.itemsInList != null ) {
                 for (ItemEntity ie : listEntity.itemsInList) {
-                    itemsInTheList.add(ie.getId() + ID_AND_NAME_SEPERATOR + ie.getName());
+                    itemsInTheList.add(ie.duplicate());
                 }
             }
         }
@@ -242,9 +238,12 @@ public class AddOrModifyList extends AppCompatActivity {
         }
 
         // Set the items already present in the list (if any) with the "remove" button
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, R.layout.item_lista_da_rimuovere, itemsInTheList) {
+        ArrayAdapter<ItemEntity> adapterItemsInList = new ArrayAdapter<ItemEntity>(this, R.layout.item_lista_da_rimuovere, itemsInTheList) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
+                if (position >= itemsInTheList.size() )
+                    return null;
+
                 View view = convertView;
                 // Create view if null
                 if (view == null) {
@@ -253,11 +252,10 @@ public class AddOrModifyList extends AppCompatActivity {
                 }
 
                 // Get item name and set it in the textview
-                int index = itemsInTheList.get(position).indexOf(ID_AND_NAME_SEPERATOR);
-                String justText = itemsInTheList.get(position).substring(index+1);
+                String justText = itemsInTheList.get(position).getName();
                 TextView itemName = view.findViewById(R.id.textView_itemName);
                 itemName.setText(justText);
-                // TODO usa setTag
+                itemName.setTag(itemsInTheList.get(position).id);
 
                 // Set remove button of corresponding item
                 view.findViewById(R.id.floatingActionButton_removeItem)
@@ -276,7 +274,7 @@ public class AddOrModifyList extends AppCompatActivity {
         };
 
         ListView listView = findViewById(R.id.listView_itemsRemove);
-        listView.setAdapter(adapter);
+        listView.setAdapter(adapterItemsInList);
 
         // Dropdown menu
         ListView listViewDropDownMenu = findViewById(R.id.listViewResults);
@@ -288,8 +286,22 @@ public class AddOrModifyList extends AppCompatActivity {
             Pair<Long, String> pair = dropDownMenuHandler.getIdAndName(position);
             long idItem = pair.first;
             String name = pair.second;
-            itemsInTheList.add(0, idItem + ID_AND_NAME_SEPERATOR + name);
-            adapter.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
+
+            if (idItem != -1) {
+                // Check if item is already in list
+                Set<Long> idSet = itemsInTheList.stream()
+                        .map(ItemEntity::getId)
+                        .collect(Collectors.toSet());
+
+                if (idSet.contains(idItem)) {
+                    Toast.makeText(this, getString(R.string.error_no_duplicates), Toast.LENGTH_SHORT).show();
+                    return;
+                }
+            }
+
+            ItemEntity ieToAdd = new ItemEntity(idItem, name);
+            itemsInTheList.add(0, ieToAdd);
+            adapterItemsInList.notifyDataSetChanged(); // Notify the adapter that the dataset has changed
             findViewById(R.id.textView_emptyList).setVisibility(View.GONE);
             listViewDropDownMenu.setVisibility(View.GONE);
         });

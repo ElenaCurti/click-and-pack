@@ -15,9 +15,9 @@ import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentSkipListSet
 
-class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCameraBinding) : OnSuccessListener<List<DetectedObject>>, OnFailureListener {
+class MyObjectDetectorCamera (viewBinding: ActivityCheckListWithCameraBinding) : OnSuccessListener<List<DetectedObject>>, OnFailureListener {
     // Handler for coloured boxes with detected items
-    private var objecteBoundingBoxView: ObjectBoundingBoxView = viewBinding.objectBoundingBoxView
+    private var objectBoundingBoxView: ObjectBoundingBoxView = viewBinding.objectBoundingBoxView
 
     // Object detector
     private val objectDetector: ObjectDetector
@@ -41,7 +41,7 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
 
     // List of detected items' ids. It's thread-safe.
     // Key is tracked id of the item. Value is the list of the object' labels' indexes
-    val mapTrackedIdToIndex = ConcurrentHashMap<Int, ConcurrentSkipListSet<Int>>()
+    private val mapTrackedIdToIndex = ConcurrentHashMap<Int, ConcurrentSkipListSet<Int>>()
 
     init {
         // Object detector initiation
@@ -65,7 +65,7 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
     fun getListOfDetectedAndClickedItems(): List<Int> {
         // Return the list of clicked (packed) items
 
-        var clickedTrackingIds : ConcurrentSkipListSet<Int> = objecteBoundingBoxView.getClickedTrackingIds();
+        val clickedTrackingIds : ConcurrentSkipListSet<Int> = objectBoundingBoxView.getClickedTrackingIds()
 
         val valuesForClickedKeys = mutableListOf<Int>()
         for (key in clickedTrackingIds) {
@@ -110,8 +110,8 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
 
     override fun onSuccess(detectedObjects: List<DetectedObject>?) {
         // Callback with list of detected items
-        if (detectedObjects == null || detectedObjects?.size == 0 ) {
-            objecteBoundingBoxView.setNoObjectFound()
+        if (detectedObjects.isNullOrEmpty()) {
+            objectBoundingBoxView.setNoObjectFound()
             return;
         }
 
@@ -146,13 +146,13 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
         }
 
         // Set coloured bounding boxes
-        objecteBoundingBoxView.setMultipleBoundingBoxes(boundingBoxes, width, height, texts)
+        objectBoundingBoxView.setMultipleBoundingBoxes(boundingBoxes, width, height, texts)
     }
 
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
         errorDuringProcessingOfCamera = true
-        Log.d("objectDetector", "object detector camera. error:" + e.message);
+        Log.d("objectDetector", "object detector camera. error:" + e.message)
     }
 
 

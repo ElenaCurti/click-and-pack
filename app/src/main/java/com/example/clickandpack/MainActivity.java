@@ -1,6 +1,7 @@
 package com.example.clickandpack;
 
 import static database_handler.AppDatabase.DB_NAME;
+import static database_handler.MyDatabaseInitiator.resetAndPopulateDB;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.Room;
@@ -25,9 +26,6 @@ import database_handler.AppDatabase;
 import database_handler.ListEntity;
 
 public class MainActivity extends AppCompatActivity {
-
-    private static final String TAG_LOGGER = "MyTag_MainActivity";
-
     // Intent request code
     private static final int  REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2, REQUEST_CODE_VISUALIZE_LIST = 3;
     // Intent keys and values
@@ -40,8 +38,6 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String RESPONSE_KEY = "response";
 
-    // Lists adapter
-    private ArrayAdapter<String> adapterListe;
     private List<ListEntity> userLists;
 
 
@@ -68,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(() -> {
             initializeAppDatabase();
-            // resetAndPopulateDB(this, appDatabase);
+            resetAndPopulateDB(this, appDatabase);
             userLists = appDatabase.listDao().getAllLists();
         });
         t.start();
@@ -99,7 +95,8 @@ public class MainActivity extends AppCompatActivity {
         String textToShow = "";
         if (resultCode == RESULT_OK) {
             readAndShowUserLists();
-            textToShow = data.getExtras().getString(RESPONSE_KEY);
+            if (data.getExtras() != null)
+                textToShow = data.getExtras().getString(RESPONSE_KEY);
         } else {
             switch(requestCode){
                 case REQUEST_CODE_ADD_LIST:
@@ -114,7 +111,7 @@ public class MainActivity extends AppCompatActivity {
                     textToShow = getString(R.string.general_error);
             }
         }
-        if (!textToShow.equals(""))
+        if (textToShow!= null && !textToShow.equals(""))
             Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
     }
 
@@ -128,7 +125,11 @@ public class MainActivity extends AppCompatActivity {
         List<String> fixedSizeList = new ArrayList<>(Collections.nCopies(userLists.size(), ""));
 
         // Adapter for the list
-        adapterListe = new ArrayAdapter<String>(this, R.layout.elenco_liste_prima_videata, fixedSizeList) {
+        // Create view if null
+        // Set list name and description as main-item and sub-item
+        // Click listener of "visualize list" and "modify list"
+        // Lists adapter
+        ArrayAdapter<String> adapterListsOfUser = new ArrayAdapter<String>(this, R.layout.elenco_liste_prima_videata, fixedSizeList) {
             @Override
             public View getView(int position, View convertView, ViewGroup parent) {
                 View view = convertView;
@@ -150,22 +151,22 @@ public class MainActivity extends AppCompatActivity {
                 subItemTextView.setText(listEntity.getDescription());
 
                 // Click listener of "visualize list" and "modify list"
-                FloatingActionButton buttonVisualizza = view.findViewById(R.id.floatingActionButton_visualizza);
-                buttonVisualizza.setTag(id);
-                buttonVisualizza.setOnClickListener(v -> {
+                FloatingActionButton buttonVisualize = view.findViewById(R.id.floatingActionButton_visualize);
+                buttonVisualize.setTag(id);
+                buttonVisualize.setOnClickListener(v -> {
                     Intent i = new Intent(getApplicationContext(), VisualizeList.class);
-                    i.putExtra(KEY_ID_LIST,  "" + v.getTag());
-                    startActivityForResult(i,REQUEST_CODE_VISUALIZE_LIST);
+                    i.putExtra(KEY_ID_LIST, "" + v.getTag());
+                    startActivityForResult(i, REQUEST_CODE_VISUALIZE_LIST);
                 });
 
-                FloatingActionButton buttonModifica = view.findViewById(R.id.floatingActionButton_modifica);
-                buttonModifica.setTag(id);
+                FloatingActionButton buttonModify = view.findViewById(R.id.floatingActionButton_modify);
+                buttonModify.setTag(id);
 
-                buttonModifica.setOnClickListener (v -> {
+                buttonModify.setOnClickListener(v -> {
                     Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
                     i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST);
-                    i.putExtra(KEY_ID_LIST, Long.parseLong(""+ v.getTag()));
-                    startActivityForResult(i,REQUEST_CODE_MODIFY_LIST);
+                    i.putExtra(KEY_ID_LIST, Long.parseLong("" + v.getTag()));
+                    startActivityForResult(i, REQUEST_CODE_MODIFY_LIST);
                 });
 
                 return view;
@@ -174,7 +175,7 @@ public class MainActivity extends AppCompatActivity {
         };
 
         ListView listView = findViewById(R.id.listView_liste);
-        listView.setAdapter(adapterListe);
+        listView.setAdapter(adapterListsOfUser);
     }
 
 

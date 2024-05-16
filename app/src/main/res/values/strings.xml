@@ -28,6 +28,7 @@
     <string name="error_creating_new_list">There was an error during the creation of a new list!</string>
     <string name="error_modifying_list">There was an error during the editing of a list!</string>
     <string name="error_name_non_empty">Name of the list cannot be empty!</string>
+    <string name="error_no_duplicates">A list can\'t have duplicate!</string>
 
 
     <!-- Visualize list   -->

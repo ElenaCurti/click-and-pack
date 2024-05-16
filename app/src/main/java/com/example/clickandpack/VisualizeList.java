@@ -67,7 +67,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_visualize_list);
 
-        // Get list id from mainactivity and read database info about list
+        // Get list id from MainActivity and read database info about list
         Intent i = getIntent();
         Long idList = Long.parseLong(i.getStringExtra(MainActivity.KEY_ID_LIST));
         Thread t = new Thread(new Runnable() {
@@ -133,7 +133,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private void askUserToChoseImageForObjectDetection(){
         if (checkIfObjectDetectionIsPossible()) {
             // Possibly ask user permission
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
+            if (/*Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&*/
                     ContextCompat.checkSelfPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE)
                             != PackageManager.PERMISSION_GRANTED) {
                 // Permission is not granted, i ask it
@@ -326,7 +326,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             backToHome();
             return;
         }
-        // Set name and descripion
+        // Set name and description
         ((TextView) findViewById(R.id.textView_listName)).setText(listEntity.getName());
         ((TextView) findViewById(R.id.textView_listDescription)).setText(listEntity.getDescription());
 
@@ -341,7 +341,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
         findViewById(R.id.textView_noItems).setVisibility(View.GONE);
 
-        // I add every item in the list in the linearview as a checkbox (with their current status)
+        // I add every item in the list in the LinearView as a checkbox (with their current status)
         for (int i = 0; i < itemsWithStatus.size(); i++) {
             ItemWithStatus item_status = itemsWithStatus.get(i);
 

@@ -73,15 +73,12 @@ class CheckListWithCamera : AppCompatActivity() {
     }
 
     private fun backToVisualizeList() {
-        // Back to previous view
+        // Back to previous view. I send the detected and clicked items
         val i = Intent()
         i.putExtra(VisualizeList.RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER, errorResponse)
         if (::myObjDetector.isInitialized ) {
-            var listOfDetectedItems: List<Int> =  myObjDetector.getListOfDetectedAndClickedItems()
+            val listOfDetectedItems: List<Int> =  myObjDetector.getListOfDetectedAndClickedItems()
 
-            Log.d("Item_arrivato", "sono qui" )
-            for (itemIndex:Int in listOfDetectedItems)
-                Log.d("Item_arrivato", "" +  itemIndex )
             val arrayList: ArrayList<Int> = ArrayList(listOfDetectedItems)
             i.putExtra(VisualizeList.RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER, arrayList)
         }

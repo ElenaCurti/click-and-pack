@@ -1,11 +1,8 @@
 package com.example.clickandpack;
 
 import android.content.Context;
-import android.util.Log;
 import android.util.Pair;
 import android.widget.ArrayAdapter;
-
-import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,9 +11,9 @@ public class ItemsArrayAdapter {
 
     private ArrayAdapter<String> adapter ;
     private List<Long> listId = new ArrayList<>();
+
     public ItemsArrayAdapter(Context context) {
-        adapter = new ArrayAdapter<>(context, R.layout.item_search_prova, new ArrayList<String>() );
-        //Log.d("TAG", "Sono qui");
+        adapter = new ArrayAdapter<>(context, R.layout.item_search_prova, new ArrayList<>() );
     }
 
     public ArrayAdapter<String> getAdapter() { return  adapter ; }

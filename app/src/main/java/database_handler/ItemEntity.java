@@ -1,7 +1,7 @@
 package database_handler;
+
 import androidx.room.Entity;
 import androidx.room.Ignore;
-import androidx.room.Insert;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "items")
@@ -18,6 +18,13 @@ public class ItemEntity {
         this.isDetectableByImages = isDetectableByImages;
     }
 
+
+    @Ignore
+    public ItemEntity(long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     // Getters
     public long getId() {
         return id;
@@ -29,5 +36,11 @@ public class ItemEntity {
 
     public boolean isDetectableByImages() {
         return isDetectableByImages;
+    }
+
+    public ItemEntity duplicate(){
+        ItemEntity copy = new ItemEntity(name, isDetectableByImages);
+        copy.id = this.id;
+        return copy;
     }
 }

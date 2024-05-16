@@ -73,8 +73,8 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
     override fun onSuccess(detectedObjects: List<DetectedObject>?) {
         if (!detectedObjects.isNullOrEmpty()) {
             for (obj in detectedObjects) {
-                obj.labels?.forEach { label ->
-                    resultMap[label.index.toLong()] = label.text;
+                obj.labels.forEach { label ->
+                    resultMap[label.index.toLong()] = label.text
                 }
             }
         }
@@ -82,7 +82,7 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
 
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
-        Log.d("objectDetector", "object detector still image. error:" + e.message);
+        Log.d("objectDetector", "object detector still image. error:" + e.message)
         resultMap[-1L] = "-"
 
 
