@@ -45,12 +45,19 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
         numberOfImagesToProcess = urisOfImagesChosenByUser.size
         resultMap = ConcurrentHashMap<Long, String>()
         for (imageUri : Uri in urisOfImagesChosenByUser) {
-            var image: InputImage = try {
+            val image: InputImage = try {
                 InputImage.fromFilePath(context, imageUri)
             } catch (e: IOException) {
                 numberOfAlreadyProcessedImages++
                 continue
             }
+
+            /*
+            // Invalid image for testing
+            val invalidBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+            image = InputImage.fromBitmap(invalidBitmap, 0)
+            */
+
 
             imageDetector.process(image)
                 .addOnSuccessListener(this)
@@ -75,8 +82,8 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
 
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
-        Log.d("RESULT_IMAGE_LAB", "error:" + e.message);
-        resultMap[-1L] = "-"  // TODO test if works
+        Log.d("objectDetector", "object detector still image. error:" + e.message);
+        resultMap[-1L] = "-"
 
 
     }

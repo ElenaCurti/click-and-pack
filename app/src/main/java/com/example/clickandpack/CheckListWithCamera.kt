@@ -7,17 +7,24 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
+import androidx.camera.core.CameraSelector
+import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.Preview
+import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
+import object_detector.MyObjectDetectorCamera
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
 
 class CheckListWithCamera : AppCompatActivity() {
-    // Handlers for camera
+    // Handler for camera
     private lateinit var cameraExecutor: ExecutorService
-    private lateinit var cameraManager: MyCameraHandler
+
+    // Object detector
+    private lateinit var myObjDetector : MyObjectDetectorCamera
 
     // "xml" file of the view
     private lateinit var viewBinding: ActivityCheckListWithCameraBinding
@@ -26,7 +33,7 @@ class CheckListWithCamera : AppCompatActivity() {
     private val CAMERA_PERMISSION_REQUEST_CODE = 1
 
     // Response in case of errors
-    private var response: String = ""
+    private var errorResponse: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,30 +44,9 @@ class CheckListWithCamera : AppCompatActivity() {
             backToVisualizeList()
         }
 
-        runOnUiThread { startCamera() }
+        runOnUiThread { handleCamera() }
     }
 
-
-    // Camera permission and (possibly) visualization
-    private fun startCamera() {
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            != PackageManager.PERMISSION_GRANTED
-        ) {
-            // Permission is not already granted, so I request it
-            ActivityCompat.requestPermissions(
-                this,
-                arrayOf(Manifest.permission.CAMERA),
-                CAMERA_PERMISSION_REQUEST_CODE
-            )
-        } else {
-            // Permission is granted, so I start the camera
-            if (!::cameraExecutor.isInitialized)
-                cameraExecutor = Executors.newSingleThreadExecutor()
-            if (!::cameraManager.isInitialized )
-                cameraManager = MyCameraHandler(viewBinding, cameraExecutor)
-            cameraManager.startCameraView(this)
-        }
-    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -72,10 +58,10 @@ class CheckListWithCamera : AppCompatActivity() {
         if (requestCode == CAMERA_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 // Camera permission granted
-                startCamera()
+                handleCamera()
             } else {
                 // Camera permission denied
-                response = getString(R.string.camera_permission_denied_error)
+                errorResponse = getString(R.string.camera_permission_denied_error)
                 backToVisualizeList()
             }
         }
@@ -89,9 +75,10 @@ class CheckListWithCamera : AppCompatActivity() {
     private fun backToVisualizeList() {
         // Back to previous view
         val i = Intent()
-        i.putExtra(VisualizeList.RESPONSE_KEY_FROM_CAMERA_CHECKER, response)
-        if (::cameraManager.isInitialized ) {
-            var listOfDetectedItems: List<Int> = cameraManager.getListOfDetectedItems()
+        i.putExtra(VisualizeList.RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER, errorResponse)
+        if (::myObjDetector.isInitialized ) {
+            var listOfDetectedItems: List<Int> =  myObjDetector.getListOfDetectedAndClickedItems()
+
             Log.d("Item_arrivato", "sono qui" )
             for (itemIndex:Int in listOfDetectedItems)
                 Log.d("Item_arrivato", "" +  itemIndex )
@@ -107,4 +94,67 @@ class CheckListWithCamera : AppCompatActivity() {
         if (::cameraExecutor.isInitialized)
             cameraExecutor.shutdown()
     }
+
+    @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
+    fun  handleCamera(){
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
+            != PackageManager.PERMISSION_GRANTED ) {
+            // Permission is not already granted, so I request it
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CAMERA),
+                CAMERA_PERMISSION_REQUEST_CODE
+            )
+            return
+        }
+
+        // Permission is granted, so I start the camera
+
+        if (!::cameraExecutor.isInitialized)
+            cameraExecutor = Executors.newSingleThreadExecutor()
+        if (!::myObjDetector.isInitialized )
+            myObjDetector =  MyObjectDetectorCamera(viewBinding)
+
+        val lineAnalyzer = ImageAnalysis.Builder()
+            .build()
+            .apply {
+                setAnalyzer(cameraExecutor, ImageAnalysis.Analyzer { imageProxy ->
+                    // A new image is available from camera, so object detection algorithm will start with that image
+                    myObjDetector.processImageProxy(imageProxy)
+                })
+            }
+
+        // Starting camera and camera preview. Code found here:
+        // https://developer.android.com/media/camera/camerax/
+        val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
+
+        // Used to bind the lifecycle of cameras to the lifecycle owner
+        cameraProviderFuture.addListener({
+            val cameraProvider: ProcessCameraProvider = cameraProviderFuture.get()
+
+            // Preview
+            val preview = Preview.Builder()
+                .build()
+                .also {
+                    it.setSurfaceProvider(viewBinding.viewFinder.surfaceProvider)
+                }
+
+            // Select back camera as a default
+            val cameraSelector = CameraSelector.DEFAULT_BACK_CAMERA
+
+            try {
+                // Unbind use cases before rebinding
+                cameraProvider.unbindAll()
+
+                // Bind use cases to camera
+                cameraProvider.bindToLifecycle(
+                    this, cameraSelector, preview, lineAnalyzer)
+
+            } catch(exc: Exception) {
+                Log.e("camera", "Use case binding failed", exc)
+            }
+
+        }, ContextCompat.getMainExecutor(this))
+    }
+
 }

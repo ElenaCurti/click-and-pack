@@ -22,36 +22,22 @@
         />
 
 
-
-    <!--        TODO DA RIMUOVERE ? -->
-    <ScrollView
-        android:id="@+id/scrollView2"
+    <TextView
+        android:id="@+id/textView_info"
         android:layout_width="0dp"
-
         android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:layout_marginStart="10dp"
         android:layout_marginEnd="10dp"
         android:background="@color/white"
-        app:layout_constraintBottom_toBottomOf="@+id/objectBoundingBoxView"
-        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton_backToHome"
-        app:layout_constraintStart_toStartOf="parent">
+        android:text="@string/object_detector_info"
+        android:textColor="@color/my_gray"
+        android:textSize="20dp"
+        android:textAlignment="center"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/floatingActionButton_backToHome" />
 
-        <LinearLayout
-            android:id="@+id/linearLayout_resultML"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/textView_info"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/object_detector_info"
-                android:textColor="@color/my_gray"
-                android:textSize="20dp"
-                 />
-        </LinearLayout>
-
-    </ScrollView>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/floatingActionButton_backToHome"
@@ -60,9 +46,9 @@
 
         android:layout_marginEnd="20dp"
         android:clickable="true"
-        app:layout_constraintBottom_toBottomOf="@+id/scrollView2"
+        app:layout_constraintBottom_toBottomOf="@+id/textView_info"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/scrollView2"
+        app:layout_constraintTop_toTopOf="@+id/textView_info"
         app:srcCompat="?attr/homeAsUpIndicator" />
 
 

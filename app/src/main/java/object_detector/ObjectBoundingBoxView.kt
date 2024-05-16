@@ -149,7 +149,7 @@ class ObjectBoundingBoxView(context: Context, attrs: AttributeSet?) : View(conte
                     backgroundPaint.color = Color.BLACK
                 } else if (regexObjectIsUnknown.matches(t)) {
                     // Unrecognised item
-                    textToShow = t + "Unknown object" // TODO metti in string.xml
+                    textToShow = t + "Unknown object"
                     textPaint.color = Color.RED
                     backgroundPaint.color = Color.WHITE
                 } else {

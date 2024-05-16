@@ -42,6 +42,7 @@ public class AddOrModifyList extends AppCompatActivity {
     // All items detectable by images. They will be contained in the dropdown menu
     private List<ItemEntity> allDetectableItems = null;
 
+    // List of string that represent the items in the list
     private  List<String> itemsInTheList = new ArrayList<>();
 
     private AppDatabase appDatabase;
@@ -57,10 +58,11 @@ public class AddOrModifyList extends AppCompatActivity {
         // Read database, according to the action user wants to perform (add new list or modify one)
         Intent i = getIntent();
         String operation = i.getStringExtra(MainActivity.OPERATION_NAME);
+        Long idList = i.getLongExtra(MainActivity.KEY_ID_LIST, -1);
         new Thread(new Runnable() {
             @Override
             public void run() {
-                readDatabase(operation);
+                readDatabase(operation, idList);
             }
         }).start();
 
@@ -82,12 +84,11 @@ public class AddOrModifyList extends AppCompatActivity {
             appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
     }
 
-    private void readDatabase(String operation){
+    private void readDatabase(String operation, Long idList){
         initializeAppDatabase();
 
         // Read the list content if user wants to modify one
-        if (operation.startsWith(MainActivity.OPERATION_MODIFY_LIST)) {
-            long idList = Long.parseLong( ( (String[]) operation.split(" ") )[1]);
+        if (operation.equals(MainActivity.OPERATION_MODIFY_LIST)) {
             listEntity = appDatabase.listDao().getListFromId(idList);
             listEntity.itemsInList = appDatabase.itemsInListDao().getAllItemsInList(idList);
         }

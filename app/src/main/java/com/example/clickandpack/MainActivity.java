@@ -32,10 +32,11 @@ public class MainActivity extends AppCompatActivity {
     private static final int  REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2, REQUEST_CODE_VISUALIZE_LIST = 3;
     // Intent keys and values
     public static final String OPERATION_NAME = "action";
+
     public static final String OPERATION_ADD_LIST = "add_list";
     public static final String OPERATION_MODIFY_LIST = "modify_list";
 
-    public static final String ID_LIST = "id_list";
+    public static final String KEY_ID_LIST = "id_list";
 
     public static final String RESPONSE_KEY = "response";
 
@@ -153,7 +154,7 @@ public class MainActivity extends AppCompatActivity {
                 buttonVisualizza.setTag(id);
                 buttonVisualizza.setOnClickListener(v -> {
                     Intent i = new Intent(getApplicationContext(), VisualizeList.class);
-                    i.putExtra(ID_LIST,  "" + v.getTag());
+                    i.putExtra(KEY_ID_LIST,  "" + v.getTag());
                     startActivityForResult(i,REQUEST_CODE_VISUALIZE_LIST);
                 });
 
@@ -162,8 +163,8 @@ public class MainActivity extends AppCompatActivity {
 
                 buttonModifica.setOnClickListener (v -> {
                     Intent i = new Intent(getApplicationContext(), AddOrModifyList.class);
-                    // TODO metti un altro extra
-                    i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST + " " + v.getTag());
+                    i.putExtra(OPERATION_NAME, OPERATION_MODIFY_LIST);
+                    i.putExtra(KEY_ID_LIST, Long.parseLong(""+ v.getTag()));
                     startActivityForResult(i,REQUEST_CODE_MODIFY_LIST);
                 });
 

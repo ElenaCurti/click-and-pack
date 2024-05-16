@@ -89,6 +89,13 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
                 height = imageProxy.height
             }
 
+            /*
+            // Invalid image for testing
+            val invalidBitmap = Bitmap.createBitmap(1, 1, Bitmap.Config.ARGB_8888)
+            image = InputImage.fromBitmap(invalidBitmap, 0)
+            */
+
+
             objectDetector.process(image)
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this)
@@ -145,7 +152,7 @@ class MyObjectDetectorCamera (private val viewBinding: ActivityCheckListWithCame
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
         errorDuringProcessingOfCamera = true
-        Log.d("MyObjectDetectorCamera", "error:" + e.message);
+        Log.d("objectDetector", "object detector camera. error:" + e.message);
     }
 
 

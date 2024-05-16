@@ -15,7 +15,6 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -53,7 +52,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     private String response = "";
 
     // Key for message received from the camera object recognition
-    public static final String RESPONSE_KEY_FROM_CAMERA_CHECKER = "response-checker";
+    public static final String RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER = "response-checker";
 
     // Key for ids of detected items by camera
     public static final String RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER = "detected-indexes";
@@ -70,7 +69,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
         // Get list id from mainactivity and read database info about list
         Intent i = getIntent();
-        Long idList = Long.parseLong(i.getStringExtra(MainActivity.ID_LIST));
+        Long idList = Long.parseLong(i.getStringExtra(MainActivity.KEY_ID_LIST));
         Thread t = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -208,11 +207,12 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
 
         // Object detection with camera ended
         if ( requestCode == REQUEST_CODE_CHECK_LIST_WITH_CAMERA &&  data != null && data.getExtras() != null) {
-            String textToShow = data.getExtras().getString(RESPONSE_KEY_FROM_CAMERA_CHECKER);
+            String textToShow = data.getExtras().getString(RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER);
 
-            if (!textToShow.equals(""))
+            if (!textToShow.equals("")) {
                 Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
-
+                return;
+            }
             // Retrieve ids of detected objects
             ArrayList<Integer> detectedItemsIndexes = data.getExtras().getIntegerArrayList(RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER);
             if (detectedItemsIndexes == null ) {
