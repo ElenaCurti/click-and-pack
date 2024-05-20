@@ -279,7 +279,7 @@ public class AddOrModifyList extends AppCompatActivity {
         // Dropdown menu
         ListView listViewDropDownMenu = findViewById(R.id.listViewResults);
 
-        final ItemsArrayAdapter dropDownMenuHandler = new ItemsArrayAdapter(this);
+        final DropDownItemsMenu dropDownMenuHandler = new DropDownItemsMenu(this, getString(R.string.custom_item_distinguish));
         listViewDropDownMenu.setAdapter(dropDownMenuHandler.getAdapter());
         listViewDropDownMenu.setOnItemClickListener( (parent, view, position, id) -> {
             // When user clicks on an item of the drop down menu, I add it to the list of items
@@ -297,7 +297,9 @@ public class AddOrModifyList extends AppCompatActivity {
                     Toast.makeText(this, getString(R.string.error_no_duplicates), Toast.LENGTH_SHORT).show();
                     return;
                 }
-            }
+            } /*else
+                Toast.makeText(this, getString(R.string.custom_item_inserted), Toast.LENGTH_SHORT).show();*/
+
 
             ItemEntity ieToAdd = new ItemEntity(idItem, name);
             itemsInTheList.add(0, ieToAdd);

@@ -64,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(() -> {
             initializeAppDatabase();
-            resetAndPopulateDB(this, appDatabase);
+            //resetAndPopulateDB(this, appDatabase);
             userLists = appDatabase.listDao().getAllLists();
         });
         t.start();
@@ -140,25 +140,35 @@ public class MainActivity extends AppCompatActivity {
                     view = inflater.inflate(R.layout.elenco_liste_prima_videata, parent, false);
                 }
 
+                // Visualize click listener
+                View.OnClickListener visualizeList = new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        Intent i = new Intent(getApplicationContext(), VisualizeList.class);
+                        i.putExtra(KEY_ID_LIST, "" + v.getTag());
+                        startActivityForResult(i, REQUEST_CODE_VISUALIZE_LIST);
+                    }
+                } ;
+
                 // Set list name and description as main-item and sub-item
                 ListEntity listEntity = userLists.get(position);
                 long id = listEntity.getId();
-
                 TextView mainItemTextView = view.findViewById(R.id.textView_main_item);
                 mainItemTextView.setText(listEntity.getName());
+                mainItemTextView.setTag(id);
+                mainItemTextView.setOnClickListener(visualizeList);
 
                 TextView subItemTextView = view.findViewById(R.id.textView_sub_item);
                 subItemTextView.setText(listEntity.getDescription());
+                subItemTextView.setTag(id);
+                subItemTextView.setOnClickListener(visualizeList);
 
-                // Click listener of "visualize list" and "modify list"
+                // Set visualize button
                 FloatingActionButton buttonVisualize = view.findViewById(R.id.floatingActionButton_visualize);
                 buttonVisualize.setTag(id);
-                buttonVisualize.setOnClickListener(v -> {
-                    Intent i = new Intent(getApplicationContext(), VisualizeList.class);
-                    i.putExtra(KEY_ID_LIST, "" + v.getTag());
-                    startActivityForResult(i, REQUEST_CODE_VISUALIZE_LIST);
-                });
+                buttonVisualize.setOnClickListener(visualizeList);
 
+                // Click listener of "modify list"
                 FloatingActionButton buttonModify = view.findViewById(R.id.floatingActionButton_modify);
                 buttonModify.setTag(id);
 

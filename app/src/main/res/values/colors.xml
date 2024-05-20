@@ -4,6 +4,7 @@
     <color name="white">#FFFFFFFF</color>
 <!--    <color name="colore_background">#FEF7FF</color>-->
     <color name="colore_background">#EDE8DE</color>
+    <color name="colore_background_item_custom">#FFE8DE</color>
     <color name="my_gray">#808080</color>
 
 </resources>

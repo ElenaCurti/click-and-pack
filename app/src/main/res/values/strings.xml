@@ -22,6 +22,8 @@
     <string name="list_update_ok">Existing list upstated succesfully!</string>
     <string name="cancel_changes_ok">All changes have been canceled!</string>
     <string name="delete_list_ok">Selected list has been succesfully deleted!</string>
+    <string name="custom_item_inserted">The item you just inserted will not be detected with images</string>
+    <string name="custom_item_distinguish">\n[Not detectable with images]</string>
 
     <!-- Errors -->
     <string name="general_error">An error occurred during last operation!</string>
