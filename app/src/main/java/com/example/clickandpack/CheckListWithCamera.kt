@@ -3,6 +3,7 @@ package com.example.clickandpack
 import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
@@ -37,6 +38,8 @@ class CheckListWithCamera : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+
         viewBinding = ActivityCheckListWithCameraBinding.inflate(layoutInflater)
         setContentView(viewBinding.root)
 

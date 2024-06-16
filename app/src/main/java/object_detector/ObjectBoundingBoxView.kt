@@ -7,25 +7,26 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.*
 import android.util.AttributeSet
-import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.View.OnTouchListener
-import object_detector.MyObjectDetectorCamera.Companion.SEPARATOR_LABEL
+import com.google.mlkit.vision.objects.DetectedObject
 import java.util.concurrent.ConcurrentSkipListSet
 
 
 @SuppressLint("ClickableViewAccessibility") // otherwise waring in init
 class ObjectBoundingBoxView(context: Context, attrs: AttributeSet?) : View(context, attrs), OnTouchListener{
-    // Displayed boxes' size and text
-    private var boundingBoxes: List<RectF>? = null
-    private var texts: List<String>? = null
-
-    // Digit(s), point, space, end of text --> means the object has no label, so it's unknown
-    private val regexObjectIsUnknown = Regex("^\\d+\\.\\s$")
+    // Displayed boxes
+    private lateinit var objDetected : DetectedObject
+    private var box : RectF = RectF()
+    private var scaleFactorX : Float = -1f
+    private var scaleFactorY : Float = -1f
 
     // Tracking ids of the clicked items (the one how will be setted as "packed")
     private var clickedTrackedIds = ConcurrentSkipListSet<Int>()
+
+    // Indexes of the clicked items
+    private var clickedItemsIndexes = ConcurrentSkipListSet<Int>()
 
     // Paints of the text label and their background
     private val textPaint = Paint().apply {
@@ -45,79 +46,64 @@ class ObjectBoundingBoxView(context: Context, attrs: AttributeSet?) : View(conte
     }
 
     override fun onTouch(v: View?, event: MotionEvent?): Boolean {
-        if (boundingBoxes == null || event == null)
+        if (event == null)
             return true
-
-        val x = event.x
-        val y = event.y
-        Log.d("item_cliccato", "x:" + x + " y:" + y)
-
+//        Log.d("click", "click")
         if (event.action == MotionEvent.ACTION_DOWN ) {
-            // Retrieve index of clicked box
-            var selectedRectIndex = getSelectedRectIndex(x,y)
-            if (selectedRectIndex == -1)
-                return true
-
             // If clicked object was correctly detected, it will be set as "packed"
-            var savedText: String = texts!!.get(selectedRectIndex)
-            if (!regexObjectIsUnknown.matches(savedText)) {
-                clickedTrackedIds.add(extractTrackingId(texts!!.get(selectedRectIndex)))
-                invalidate() // Re-draw window, so the box is coloured green
+            if (objDetected.labels.size > 0 && box.contains(event.x, event.y)) {
+                objDetected.labels.forEach{label ->
+                    clickedItemsIndexes.add(label.index)
+                }
+                clickedTrackedIds.add(objDetected.trackingId)
             }
         }
 
         return false
     }
 
-    fun getClickedTrackingIds() : ConcurrentSkipListSet<Int>{
-        return clickedTrackedIds
+    fun getClickedItemsIndexes() : ConcurrentSkipListSet<Int>{
+        return clickedItemsIndexes
     }
 
-    private fun getSelectedRectIndex(x: Float, y: Float): Int {
-        boundingBoxes?.forEachIndexed { index, rect ->
-            if (rect.contains(x, y)) {
-                return index
-            }
-        }
-        return -1
-    }
 
     fun setNoObjectFound(){
-        boundingBoxes = null
-        texts = null
+        box.left = 0f
+        box.top = 0f
+        box.right = 0f
+        box.bottom = 0f
+
         invalidate()
     }
 
-    fun setMultipleBoundingBoxes(rects: List<Rect>, imagesWidth: Int, imagesHeight: Int, texts: List<String>) {
-        // Save size and text of rects to draw
-        boundingBoxes = rects.map { rect ->
-            val viewWidth = width
-            val viewHeight = height
-            val scaleFactorX = viewWidth.toFloat() / imagesHeight.toFloat()
-            val scaleFactorY = viewHeight.toFloat() / imagesWidth.toFloat()
-            RectF(
-                rect.left * scaleFactorX,
-                rect.top * scaleFactorY,
-                rect.right * scaleFactorX,
-                rect.bottom * scaleFactorY
-            )
+    fun setDetectedObject(detectedObject: DetectedObject, imagesWidth: Int, imagesHeight: Int) {
+        // Save detected object
+        objDetected = detectedObject
+
+        // Set bounding box's borders
+        scaleFactorX = width.toFloat() / imagesHeight.toFloat()
+        scaleFactorY = height.toFloat() / imagesWidth.toFloat()
+        box.left = detectedObject.boundingBox.left * scaleFactorX
+        box.top = detectedObject.boundingBox.top * scaleFactorY
+        box.right = detectedObject.boundingBox.right * scaleFactorX
+        box.bottom = detectedObject.boundingBox.bottom * scaleFactorY
+
+        // Set bb color
+        if (clickedTrackedIds.contains(detectedObject.trackingId)) {
+            // Packed item
+            textPaint.color = Color.GREEN
+            backgroundPaint.color = Color.BLACK
+        } else if (detectedObject.labels.size == 0) {
+            // Unrecognised item
+            textPaint.color = Color.RED
+            backgroundPaint.color = Color.WHITE
+        } else {
+            // Recognised, but not packed item
+            textPaint.color = Color.BLUE
+            backgroundPaint.color = Color.WHITE
         }
-        this.texts = texts.toList()
+
         invalidate()
-    }
-
-    private fun extractTrackingId(input: String): Int {
-        // Return tracking id (the number before the ". ") from displayed text
-        val regex = Regex("""(\d+)\.""")
-        val matchResult = regex.find(input)
-        val numberString = matchResult?.groups?.get(1)?.value
-        return numberString!!.toInt()
-    }
-
-    private fun isObjectPacked(input: String): Boolean {
-       // Object is packed if it's id is in clickedTrackedIds
-       var number = extractTrackingId(input)
-       return number != null && clickedTrackedIds.contains(number)
     }
 
     private fun getTextBackgroundSize(x: Float, y: Float, text: String): Rect {
@@ -133,58 +119,44 @@ class ObjectBoundingBoxView(context: Context, attrs: AttributeSet?) : View(conte
         )
     }
 
-
     override fun onDraw(canvas: Canvas) {
-        // For each box (should only be one at the time if in the  detector it wasn't enabled
-        // the multiple objects' detection), then draw a box and "print" labels
-        boundingBoxes?.forEachIndexed { index, box ->
+        if (!::objDetected.isInitialized || (box.left == 0f && box.top == 0f &&  box.right == 0f && box.bottom == 0f))
+            return
 
-            // Retrieve the labels t referred to the box
-            texts?.getOrNull(index)?.let { t ->
-                // Set color based on the item "status"
-                var textToShow : String = t
-                if (isObjectPacked(t)) {
-                    // Packed item
-                    textPaint.color = Color.GREEN
-                    backgroundPaint.color = Color.BLACK
-                } else if (regexObjectIsUnknown.matches(t)) {
-                    // Unrecognised item
-                    textToShow = t + "Unknown object"
-                    textPaint.color = Color.RED
-                    backgroundPaint.color = Color.WHITE
-                } else {
-                    // Recognised, but not packed item
-                    textPaint.color = Color.BLUE
-                    backgroundPaint.color = Color.WHITE
-                }
+        // Paint bb
+        textPaint.style = Paint.Style.STROKE
+        canvas.drawRect(box, textPaint)
 
-                // Draw surrounding rectangle
-                textPaint.style = Paint.Style.STROKE
-                canvas.drawRect(box, textPaint)
+        // Draw labels with background
+        textPaint.style = Paint.Style.FILL
 
-                // Draw labels with background
-                textPaint.style = Paint.Style.FILL
+        val textX = box.centerX() - box.width() / 2
+        val initialTextY = box.centerY() + textPaint.textSize / 2
 
-                val textX = box.centerX() - box.width() / 2
-                var initialTextY = box.centerY() + textPaint.textSize / 2
-
-                val labels = textToShow.split(SEPARATOR_LABEL)
-
-                // First I draw the background items
-                var y: Float = initialTextY
-                labels.forEach { label ->
-                    val background = getTextBackgroundSize(textX, y, label)
-                    canvas.drawRect(background, backgroundPaint)
-                    y += textPaint.textSize
-                }
-
-                // Then the text items
-                y = initialTextY
-                labels.forEach { label ->
-                    canvas.drawText(label, textX, y, textPaint)
-                    y += textPaint.textSize
-                }
+        val labels = mutableListOf<String>()
+        if (objDetected.labels.size == 0)
+            labels.add("" + objDetected.trackingId + ". Unknown object")
+        else {
+            var numOrNull = "" + objDetected.trackingId + ". "
+            objDetected.labels.forEach {label ->
+                labels.add(numOrNull + label.text + "(" +String.format("%.2f", label.confidence)+ ") ")
+                numOrNull = ""
             }
+        }
+
+        // First I draw the background items
+        var y: Float = initialTextY
+        labels.forEach { label ->
+            val background = getTextBackgroundSize(textX, y, label)
+            canvas.drawRect(background, backgroundPaint)
+            y += textPaint.textSize
+        }
+
+        // Then the text items
+        y = initialTextY
+        labels.forEach { label ->
+            canvas.drawText(label, textX, y, textPaint)
+            y += textPaint.textSize
         }
     }
 
