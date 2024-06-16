@@ -125,14 +125,14 @@ class MyObjectDetectorCamera (viewBinding: ActivityCheckListWithCameraBinding) :
             mapTrackedIdToIndex.putIfAbsent(trackingId, ConcurrentSkipListSet())
 
             // If a new label was assigned to a tracked object, i add it to the list
-            obj.labels?.forEach { label ->
+            /*obj.labels?.forEach { label ->
                 var listOfIndexesForTrackedObject = mapTrackedIdToIndex[obj.trackingId]!!
                 if (!listOfIndexesForTrackedObject.contains(label.index)){
                     listOfIndexesForTrackedObject.add(label.index)
                 }
-            }
+            }*/
 
-            // Set text and size of coloured boxes to show
+            // Set text and size of coloured boxes to show. Possibly skip one label (Clothing) because too generic
             val filteredLabels = if (obj.labels.any { it.text == LABEL_TO_SKIP && obj.labels.size > 1 }) {
                 obj.labels.filterNot { it.text == LABEL_TO_SKIP }   // Skip generic label
             } else {
@@ -144,7 +144,7 @@ class MyObjectDetectorCamera (viewBinding: ActivityCheckListWithCameraBinding) :
 
             boundingBoxes.add(obj.boundingBox)
         }
-
+        Log.d("bb", "passo: bb di dim:" + boundingBoxes.size + "  e texts di dim:" + texts.size + "che contiene:" + texts.toString())
         // Set coloured bounding boxes
         objectBoundingBoxView.setMultipleBoundingBoxes(boundingBoxes, width, height, texts)
     }

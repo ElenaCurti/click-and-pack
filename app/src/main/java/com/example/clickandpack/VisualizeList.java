@@ -15,6 +15,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
@@ -172,7 +173,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-
+        Log.d("img", "Request code:"  + REQUEST_CODE_PICK_IMAGES + "  Result code:" + resultCode);
         // User has selected an image to process
         if (requestCode == REQUEST_CODE_PICK_IMAGES) {
             if (resultCode != RESULT_OK || data == null) {
@@ -193,7 +194,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 Uri imageUri = data.getData();
                 urisOfImagesChosenByUser.add(imageUri);
             }
-
+            String tmp1 = data.getClipData() == null ? "null" : "non null";
+            String tmp2 = data.getData() == null ? "null" : "non null";
+            Log.d("img", "data.getClipData() == null:"  + tmp1 + "  data.getData() == null:" + tmp2);
             // Start object detection for all images
             MyObjectDetectorStillImages objectDetectorStillImages = new MyObjectDetectorStillImages( idsFound -> {
                 // Call-back with results

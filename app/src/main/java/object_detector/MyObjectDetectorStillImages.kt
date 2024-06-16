@@ -39,16 +39,22 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
                 .build()
         imageDetector = ObjectDetection.getClient(customObjectDetectorOptions)
     }
-
+    fun passToNextImageOrBackToVisualize(){
+        numberOfAlreadyProcessedImages++
+        if (numberOfAlreadyProcessedImages == numberOfImagesToProcess)
+            callbackResult.invoke(resultMap.keys().toList())
+    }
 
     fun processImages(context : Context, urisOfImagesChosenByUser : CopyOnWriteArrayList<Uri> ){
+        Log.d("img", "img arrivata");
         numberOfImagesToProcess = urisOfImagesChosenByUser.size
         resultMap = ConcurrentHashMap<Long, String>()
         for (imageUri : Uri in urisOfImagesChosenByUser) {
             val image: InputImage = try {
                 InputImage.fromFilePath(context, imageUri)
             } catch (e: IOException) {
-                numberOfAlreadyProcessedImages++
+                resultMap[-1L] = "-"
+                passToNextImageOrBackToVisualize()
                 continue
             }
 
@@ -63,9 +69,7 @@ class MyObjectDetectorStillImages (private var callbackResult: (List<Long>) -> V
                 .addOnSuccessListener(this)
                 .addOnFailureListener(this)
                 .addOnCompleteListener {
-                    numberOfAlreadyProcessedImages++
-                    if (numberOfAlreadyProcessedImages == numberOfImagesToProcess)
-                        callbackResult.invoke(resultMap.keys().toList())
+                    passToNextImageOrBackToVisualize()
                 }
         }
     }
