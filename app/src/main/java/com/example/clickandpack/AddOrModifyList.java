@@ -32,20 +32,24 @@ import database_handler.ItemEntity;
 import database_handler.ItemsInList;
 import database_handler.ListEntity;
 
-
+/**
+ * Activity with the editing of a list. It can be used to create a new list or modifying an
+ * existing one.
+ */
 public class AddOrModifyList extends AppCompatActivity {
-    // Existing list (if users wants to modify one)
+    /** Existing list (if users wants to modify one) */
     private ListEntity listEntity = null;
 
-    // All items detectable by images. They will be contained in the dropdown menu
+    /** All items detectable by images. They will be contained in the dropdown menu */
     private List<ItemEntity> allDetectableItems = null;
 
-    // List of string that represent the items in the list
+    /** List of string that represent the items in the list */
     private  List<ItemEntity> itemsInTheList = new ArrayList<>();
 
+    /** Database handler */
     private AppDatabase appDatabase;
 
-    // Response of this view
+    /** Response of this view */
     private String response = "";
 
     @Override
@@ -60,7 +64,7 @@ public class AddOrModifyList extends AppCompatActivity {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                readDatabase(operation, idList);
+                readDatabaseAndSetGUI(operation, idList);
             }
         }).start();
 
@@ -77,12 +81,24 @@ public class AddOrModifyList extends AppCompatActivity {
         });
     }
 
+    /**
+     * Method that initializes the database "handler", if not already done
+     */
     private void initializeAppDatabase(){
         if (appDatabase == null)
             appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
     }
 
-    private void readDatabase(String operation, Long idList){
+    /**
+     * Method that reads from database:
+     *  - list's name, description, items (only if the desired operation is to modify an existing list)
+     *  - all items detectable by images
+     *  Then it will call setInitialGUI to set view's graphics
+     * @param operation this indicates the operation this view was called for. If it contains
+     *                  MainActivity.OPERATION_MODIFY_LIST, then the list's info will be read.
+     * @param idList id of the existing list. It will be ignored if operation != MainActivity.OPERATION_MODIFY_LIST
+     */
+    private void readDatabaseAndSetGUI(String operation, Long idList){
         initializeAppDatabase();
 
         // Read the list content if user wants to modify one
@@ -98,6 +114,13 @@ public class AddOrModifyList extends AppCompatActivity {
         runOnUiThread( () -> setInitialGUI(operation));
     }
 
+    /**
+     * Method that saves changes performed by user. This method will:
+     * - check that list's name's edit text is not empty
+     * - possibly create a new list in the DB or updating existing one
+     * - add or remove every selected items to the list
+     * - return to main activity
+     */
     private void saveChangesAndFinish(){
         // Input checks: list name not empty
         String newName = ((TextView) findViewById(R.id.editText_listName)).getText().toString();
@@ -164,11 +187,17 @@ public class AddOrModifyList extends AppCompatActivity {
         }).start();
     }
 
+    /**
+     * Returns to main activity without saving the changes in the DB
+     */
     private void exitWithoutSaving(){
         response = getString(R.string.cancel_changes_ok);
         finish();
     }
 
+    /**
+     * Delete the current list from DB and returns to main activity
+     */
     private void deleteListAndFinish(){
         new Thread( ()  ->  {
             appDatabase.listDao().deleteListById(listEntity.id);
@@ -176,6 +205,10 @@ public class AddOrModifyList extends AppCompatActivity {
             finish();
         }).start();
     }
+
+    /**
+     * If back button was pressed, i ask user if he/she wants to save changes before leaving, and act accordingly
+     */
     @SuppressLint("MissingSuperCall")
     @Override
     public void onBackPressed() {
@@ -188,6 +221,9 @@ public class AddOrModifyList extends AppCompatActivity {
             .setNeutralButton(android.R.string.cancel, null).show();
     }
 
+    /**
+     * Saves response for the main activity and returns
+     */
     @Override
     public void finish(){
         Intent i = new Intent();
@@ -196,7 +232,21 @@ public class AddOrModifyList extends AppCompatActivity {
         super.finish();
     }
 
-
+    /**
+     * Method that sets graphics.
+     * If user wants to create a new list, this method will:
+     * - set name and description's edit texts with an empty value
+     * - disable the "delete list" button
+     *
+     * If user wants to update and existing list, this method will:
+     * - set name and description's edit texts with list's name and description
+     * - set items already in the list
+     *
+     * In every case, it will handle all the graphical changes (adding/removing of an item, dropdown menu)
+     *
+     * @param operation this indicates the operation this view was called for. It can be
+     *                  MainActivity.OPERATION_ADD_LIST or MainActivity.OPERATION_MODIFY_LIST
+     */
     private void setInitialGUI(String operation){
         // EditText with list name cannot be empty
         EditText editTextListName = findViewById(R.id.editText_listName);

@@ -33,31 +33,35 @@ import database_handler.ItemWithStatus;
 import database_handler.ListEntity;
 import object_detector.MyObjectDetectorStillImages;
 
+/**
+ * Activity for the visualization of a list and its items
+ */
 public class VisualizeList extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener {
-    // Database handler
+    /** Database handler */
     private AppDatabase appDatabase;
 
-    // Current list which is visualized
+    /** Current list which is visualized */
     private ListEntity listEntity = null;
 
-    // Items in the list and their "status" (checked or not-checked)
+    /** Items in the list and their "status" (checked or not-checked) */
     private List<ItemWithStatus> itemsWithStatus = null ;
 
-    // List of items (recognised with images) that were packed
+    /** List of items (recognised with images) that were packed in the list */
     private List<ItemEntity> itemsPackedWithImages;
 
-    // Number of items that are in the list and are detectable by images
+    /** Number of items that are in the list and are detectable by images */
     private int numberOfItemsInListDetectableByImages ;
 
-    // Response to send to MainActivity
+    /** Response to send to MainActivity */
     private String response = "";
 
-    // Key for message received from the camera object recognition
+    /** Key for message received from the camera object recognition */
     public static final String RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER = "response-checker";
 
-    // Key for ids of detected items by camera
+    /** Key for ids of detected items by camera */
     public static final String RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER = "detected-indexes";
 
+    /** Codes requests */
     private static final int REQUEST_CODE_CHECK_LIST_WITH_CAMERA = 4;
     private static final int REQUEST_CODE_PICK_IMAGES = 1;
     private static final int STORAGE_PERMISSION_CODE = 1;
@@ -106,6 +110,13 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
             appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
     }
 
+    /**
+     * Reads from DB:
+     * - list's name, description, items.
+     * - items' status
+     * - number of item "detectable by images"
+     * @param idList
+     */
     private void readDatabase(long idList) {
         initializeAppDatabase();
         listEntity = appDatabase.listDao().getListFromId(idList);
@@ -113,6 +124,9 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         numberOfItemsInListDetectableByImages = appDatabase.itemsInListDao().countItemsInListDetectableByImages(idList);
     }
 
+    /**
+     * When app returns to main activity, i possibly insert the response (eg with errors)
+     */
     private void backToHome(){
         if (!response.equals("")) {
             Intent i = new Intent();
@@ -123,6 +137,14 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         finish();
     }
 
+    /**
+     * Method that checks if object detection is currently "available" in this list.
+     * If it's not, it will show a toast with an error message.
+     * If in the list there aren't "detectable by images" items, the object detection
+     * will not be performed, since it will be useless. So, before performing object detection,
+     * this check is necessary.
+     * @return true if in the list there is at least one item "detectable by images". false otherwise
+     */
     private boolean checkIfObjectDetectionIsPossible(){
         if (itemsWithStatus == null || itemsWithStatus.size() == 0 || numberOfItemsInListDetectableByImages < 1){
             Toast.makeText(this, getString(R.string.necessary_at_least_one_detectable_item), Toast.LENGTH_LONG).show();
@@ -131,6 +153,11 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         return true;
     }
 
+    /**
+     * Method that asks user to chose images for object detection.
+     * If the permission Manifest.permission.READ_EXTERNAL_STORAGE was not asked yet, it will be asked.
+     * This method will start the "picture selection" only if permission was already granted.
+     */
     private void askUserToChoseImageForObjectDetection(){
         if (checkIfObjectDetectionIsPossible()) {
             // Possibly ask user permission
@@ -151,14 +178,23 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         }
     }
 
+    /**
+     * Storage permissions handling and possibly ask user to chose images for object detection
+     * @param requestCode The request code passed in {@link #requestPermissions(
+     * android.app.Activity, String[], int)}
+     * @param permissions The requested permissions. Never null.
+     * @param grantResults The grant results for the corresponding permissions
+     *     which is either {@link android.content.pm.PackageManager#PERMISSION_GRANTED}
+     *     or {@link android.content.pm.PackageManager#PERMISSION_DENIED}. Never null.
+     *
+     */
     @Override
     public void onRequestPermissionsResult(int requestCode,
                                            @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        // Storage permissions handling and possibly ask user to chose images for object detection
         if (requestCode == STORAGE_PERMISSION_CODE) {
             if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                // Permission is granted. Proceed with your logic here
+                // Permission is granted
                 askUserToChoseImageForObjectDetection();
             } else {
                 // Permission is denied
@@ -167,9 +203,19 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         }
     }
 
-    // Check which activity ended:
-    //  - If picking images ended, I will start object detection in those images
-    //  - Else, if camera object recognition ended, I will display detected objects
+    /**
+     * Check which activity ended:
+     * - If picking images ended, I will start object detection in those images
+     * - Else, if camera object recognition ended, I will display detected objects' names
+     * @param requestCode The integer request code originally supplied to
+     *                    startActivityForResult(), allowing you to identify who this
+     *                    result came from.
+     * @param resultCode The integer result code returned by the child activity
+     *                   through its setResult().
+     * @param data An Intent, which can return result data to the caller
+     *               (various data can be attached to Intent "extras").
+     *
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -194,9 +240,7 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
                 Uri imageUri = data.getData();
                 urisOfImagesChosenByUser.add(imageUri);
             }
-            String tmp1 = data.getClipData() == null ? "null" : "non null";
-            String tmp2 = data.getData() == null ? "null" : "non null";
-            Log.d("img", "data.getClipData() == null:"  + tmp1 + "  data.getData() == null:" + tmp2);
+
             // Start object detection for all images
             MyObjectDetectorStillImages objectDetectorStillImages = new MyObjectDetectorStillImages( idsFound -> {
                 // Call-back with results
@@ -230,6 +274,10 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         }
     }
 
+    /**
+     * Method that shows the detected objects' names and ask user confirmation to set them as "packed"
+     * @param itemsIds ids of the detected items
+     */
     private void showObjectRecognitionResultAndAskConfirm(List<Long> itemsIds){
         initializeAppDatabase();
 
@@ -320,7 +368,11 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         itemsPackedWithImages = null;
     }
 
-
+    /**
+     * Method that handles the graphical part. It will set list's name and description.
+     * It will also set a checkbox for every item of the list. The checkbox will be
+     * checked if item is already set as packed in the db; it won't be checked otherwise
+     */
     private void setInitialGUI(){
 
         if (listEntity == null){
@@ -360,6 +412,11 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         }
     }
 
+    /**
+     * When a checkbox status changes, i update the db
+     * @param buttonView The compound button view whose state has changed.
+     * @param isChecked  The new checked state of buttonView.
+     */
     @Override
     public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
         // Every time a checkbox is clicked, I update the database

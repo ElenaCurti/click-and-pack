@@ -7,9 +7,14 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "items")
 public class ItemEntity {
 
+    /* Id of the item. It will be auto increment. */
     @PrimaryKey(autoGenerate = true)
     public long id;
+
+    /* Name of the item */
     private String name;
+
+    /* Flag to determine if item is detectable by images or not */
     private boolean isDetectableByImages;
 
     // Constructor
@@ -25,7 +30,7 @@ public class ItemEntity {
         this.name = name;
     }
 
-    // Getters
+    /* Getters */
     public long getId() {
         return id;
     }
@@ -38,6 +43,10 @@ public class ItemEntity {
         return isDetectableByImages;
     }
 
+    /**
+     * Method that return a copy of current item
+      * @return copy of item with same id, name, isDetectableByImages
+     */
     public ItemEntity duplicate(){
         ItemEntity copy = new ItemEntity(name, isDetectableByImages);
         copy.id = this.id;

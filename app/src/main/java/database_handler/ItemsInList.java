@@ -7,10 +7,17 @@ import androidx.room.PrimaryKey;
 @Entity(tableName = "items_in_list")
 public class ItemsInList {
 
+    /** Id of the "item in list". It will be auto increment. */
     @PrimaryKey(autoGenerate = true)
     public long id;
+
+    /** Id of the list */
     private long listId;
+
+    /** Id of the item */
     private long itemId;
+
+    /** Status (packed or not packed) item */
     private boolean isChecked;
 
     public ItemsInList(long listId, long itemId, boolean isChecked) {

@@ -25,23 +25,25 @@ import java.util.List;
 import database_handler.AppDatabase;
 import database_handler.ListEntity;
 
+/**
+ * Main activity shown at the beginning of the app. It will show all the users' lists. User
+ * will then be able to choose to add, visualize or modify a list.
+ */
 public class MainActivity extends AppCompatActivity {
-    // Intent request code
+    /* Intent request code */
     private static final int  REQUEST_CODE_ADD_LIST = 1, REQUEST_CODE_MODIFY_LIST = 2, REQUEST_CODE_VISUALIZE_LIST = 3;
-    // Intent keys and values
-    public static final String OPERATION_NAME = "action";
 
+    /* Intent keys and values */
+    public static final String OPERATION_NAME = "action";
     public static final String OPERATION_ADD_LIST = "add_list";
     public static final String OPERATION_MODIFY_LIST = "modify_list";
-
     public static final String KEY_ID_LIST = "id_list";
-
     public static final String RESPONSE_KEY = "response";
 
+    /* List of the user's lists */
     private List<ListEntity> userLists;
 
-
-    // Database
+    /* Database "handler" */
     private AppDatabase appDatabase;
 
 
@@ -60,6 +62,9 @@ public class MainActivity extends AppCompatActivity {
         readAndShowUserLists();
     }
 
+    /**
+     * Method that reads database with user's lists and shows them
+     */
     private void readAndShowUserLists(){
         //  Cannot access database on the main thread since it may potentially lock the UI for a long period of time.
         Thread t = new Thread(() -> {
@@ -81,14 +86,26 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    /**
+     * Method that initializes the database "handler", if not already done
+     */
     private void initializeAppDatabase(){
         if (appDatabase  == null )
             appDatabase = Room.databaseBuilder(getApplicationContext(), AppDatabase.class, DB_NAME).build();
     }
 
-
-
-
+    /**
+     * When activity ends, I check the result code.
+     * If result code is ok, I re-load the lists (because they might have been changed).
+     * @param requestCode The integer request code originally supplied to
+     *                    startActivityForResult(), allowing you to identify who this
+     *                    result came from.
+     * @param resultCode The integer result code returned by the child activity
+     *                   through its setResult().
+     * @param data An Intent, which can return result data to the caller
+     *               (various data can be attached to Intent "extras").
+     *
+     */
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -115,6 +132,9 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
     }
 
+    /**
+     * Method that handles the graphical part: shows the lists with a "visualize" and "modify" button.
+     */
     private void setInitialGUI() {
         if (userLists == null || userLists.size() == 0) {
             findViewById(R.id.textView_noList).setVisibility(View.VISIBLE);

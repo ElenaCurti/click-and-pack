@@ -13,6 +13,7 @@ public class ListEntity {
     private String name;
     private String description;
 
+    /** List of items in the list. It won't be inserted in the DB */
     @Ignore
     public List<ItemEntity> itemsInList;
 

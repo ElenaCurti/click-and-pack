@@ -12,20 +12,27 @@ import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
 
+/**
+ * Class that handles the real-time camera object detection
+ */
 class MyObjectDetectorCamera(viewBinding: ActivityCheckListWithCameraBinding) :
     OnSuccessListener<List<DetectedObject>>, OnFailureListener {
-    // Handler for coloured boxes with detected items
+
+    /** Handler for coloured boxes with detected items */
     private var objectBoundingBoxView: ObjectBoundingBoxView = viewBinding.objectBoundingBoxView
 
-    // Object detector
+    /** Object detector (provided by ML Kit) */
     private val objectDetector: ObjectDetector
 
-    // Images' width and height
+    /** Images' width and height */
     private var width: Int = -1
     private var height: Int = -1
 
+    /** Attribute that contains whether there was an error or not  */
     private var errorDuringProcessingOfCamera: Boolean = false
 
+
+    /** Path of the custom model used for object detection */
     companion object {
         // Path to custom model
         const val CUSTOM_MODEL_PATH = "custom_object_detector/object_detector.tflite"
@@ -44,17 +51,24 @@ class MyObjectDetectorCamera(viewBinding: ActivityCheckListWithCameraBinding) :
                 .enableClassification()
                 .setClassificationConfidenceThreshold(0.6f)
                 .setMaxPerObjectLabelCount(3)
-                //.enableMultipleObjects()
+                //.enableMultipleObjects()  // Actual graphics won't work with multiple objects
                 .build()
 
         objectDetector = ObjectDetection.getClient(customObjectDetectorOptions)
     }
 
+    /**
+     * Method that returns the ids of the detected and clicked items during the real-time detection
+     * @return ids of the items
+     */
     fun getListOfDetectedAndClickedItems(): List<Int> {
         // Return the list of clicked (packed) items' indexes
         return objectBoundingBoxView.getClickedItemsIndexes().toList()
     }
 
+    /**
+     * Method that performs object detection on the input image
+     */
     @androidx.camera.core.ExperimentalGetImage
     fun processImageProxy(imageProxy: ImageProxy) {
 
@@ -87,6 +101,10 @@ class MyObjectDetectorCamera(viewBinding: ActivityCheckListWithCameraBinding) :
 
     }
 
+    /**
+     * Call-back for successful object detection. It will update the current shown bounding box
+     * (size and labels)
+     */
     override fun onSuccess(detectedObjects: List<DetectedObject>?) {
         // Callback with list of detected items
         if (detectedObjects.isNullOrEmpty()) {
@@ -101,6 +119,9 @@ class MyObjectDetectorCamera(viewBinding: ActivityCheckListWithCameraBinding) :
         objectBoundingBoxView.setDetectedObject(detectedObjects[0], width, height)
     }
 
+    /**
+     * Call-back for failed object detection
+     */
     override fun onFailure(e: Exception) {
         // Task failed with an exception. Should never be called
         errorDuringProcessingOfCamera = true

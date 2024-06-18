@@ -12,10 +12,18 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Auxiliary class with a static method that:
+ * - resets lists, items, itemsInList tables in the DB
+ * - inserts the detectable items in the "item" table
+ * - creates two lists: one for the sea and one for the winter. They are filled with proper items.
+ */
 public class MyDatabaseInitiator {
 
     private final static String TAG_LOGGER="DB_INITIATOR";
     //private final static String FILE_WITH_IMAGE_LABELS= "image_labeler/filtered_image_labes.txt";
+
+    /** Path to the csv with the object detection's labels */
     private final static String FILE_WITH_DETECTABLE_OBJECTS_NAME = "custom_object_detector/detectable_objects.csv";
 
 

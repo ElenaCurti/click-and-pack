@@ -5,7 +5,9 @@ import androidx.room.Insert;
 import androidx.room.Query;
 
 import java.util.List;
-
+/**
+ * DAO class for the itemsInList
+ */
 @Dao
 public interface ItemsInListDAO {
 

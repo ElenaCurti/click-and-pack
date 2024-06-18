@@ -19,21 +19,23 @@ import object_detector.MyObjectDetectorCamera
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-
+/**
+ * Activity that handles the permissions, real-time preview and object detection of the camera
+ */
 class CheckListWithCamera : AppCompatActivity() {
-    // Handler for camera
+    /**  Handler for camera */
     private lateinit var cameraExecutor: ExecutorService
 
-    // Object detector
+    /**  Object detector */
     private lateinit var myObjDetector : MyObjectDetectorCamera
 
-    // "xml" file of the view
+    /**  "xml" file of the view */
     private lateinit var viewBinding: ActivityCheckListWithCameraBinding
 
-    // Request code for camera permissions
+    /**  Request code for camera permissions */
     private val CAMERA_PERMISSION_REQUEST_CODE = 1
 
-    // Response in case of errors
+    /**  Response in case of errors */
     private var errorResponse: String = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -50,7 +52,11 @@ class CheckListWithCamera : AppCompatActivity() {
         runOnUiThread { handleCamera() }
     }
 
-
+    /**
+     * Method that checks if camera permission is:
+     * - granted. Then, the program will start the camera real-time object detection
+     * - denied. Then, the program will return to the previous view, with an error message
+     */
     override fun onRequestPermissionsResult(
         requestCode: Int,
         permissions: Array<out String>,
@@ -70,11 +76,17 @@ class CheckListWithCamera : AppCompatActivity() {
         }
     }
 
+    /**
+     * If back button was pressed, the program will return to the previous view
+     */
     @SuppressLint("MissingSuperCall")
     override fun onBackPressed() {
         backToVisualizeList()
     }
 
+    /**
+     * Function that returns to the "visualize list" view, possibly setting the response message
+     */
     private fun backToVisualizeList() {
         // Back to previous view. I send the detected and clicked items
         val i = Intent()
@@ -95,6 +107,10 @@ class CheckListWithCamera : AppCompatActivity() {
             cameraExecutor.shutdown()
     }
 
+    /**
+     * Code that handle the camera's preview and calls the object detector algorithm on every frame.
+     * Most of the code was found here: https://developer.android.com/media/camera/camerax/
+     */
     @androidx.annotation.OptIn(androidx.camera.core.ExperimentalGetImage::class)
     fun  handleCamera(){
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
@@ -124,8 +140,7 @@ class CheckListWithCamera : AppCompatActivity() {
                 })
             }
 
-        // Starting camera and camera preview. Code found here:
-        // https://developer.android.com/media/camera/camerax/
+        // Starting camera and camera preview.
         val cameraProviderFuture = ProcessCameraProvider.getInstance(this)
 
         // Used to bind the lifecycle of cameras to the lifecycle owner
