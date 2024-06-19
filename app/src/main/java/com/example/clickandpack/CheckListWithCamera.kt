@@ -71,6 +71,7 @@ class CheckListWithCamera : AppCompatActivity() {
             } else {
                 // Camera permission denied
                 errorResponse = getString(R.string.camera_permission_denied_error)
+                Log.d("pausa", "no camera permission")
                 backToVisualizeList()
             }
         }
@@ -90,22 +91,46 @@ class CheckListWithCamera : AppCompatActivity() {
     private fun backToVisualizeList() {
         // Back to previous view. I send the detected and clicked items
         val i = Intent()
-        i.putExtra(VisualizeList.RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER, errorResponse)
         if (::myObjDetector.isInitialized ) {
-            val listOfDetectedItems: List<Int> =  myObjDetector.getListOfDetectedAndClickedItems()
+            //Log.d("pausa", "back to visualize is init")
+            val listOfDetectedItems: List<Int> = myObjDetector.getListOfDetectedAndClickedItems()
 
             val arrayList: ArrayList<Int> = ArrayList(listOfDetectedItems)
             i.putExtra(VisualizeList.RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER, arrayList)
+
+            if (listOfDetectedItems.isEmpty() && errorResponse != "") {
+                errorResponse += ". " + getString(R.string.no_item_packed_from_images)
+                setResult(RESULT_CANCELED, i)
+            } else
+                setResult(RESULT_OK, i)
+
+
+        } else {
+            //Log.d("pausa", "back to visualize NON init" )
+            setResult(RESULT_CANCELED, i)
         }
-        setResult(RESULT_OK, i)
+        i.putExtra(VisualizeList.RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER, errorResponse)
+
         finish()
     }
 
-    override fun onDestroy() {
+    /**
+     * When app is paused during the live object detection, detection is stopped and app will
+     * return to "visualization list" view to show results
+     */
+    override fun onPause() {
+        if (::myObjDetector.isInitialized ) {
+            errorResponse = getString(R.string.object_detector_stopped)
+            backToVisualizeList()
+        }
+        super.onPause()
+    }
+
+    /*override fun onDestroy() {
         super.onDestroy()
         if (::cameraExecutor.isInitialized)
             cameraExecutor.shutdown()
-    }
+    }*/
 
     /**
      * Code that handle the camera's preview and calls the object detector algorithm on every frame.

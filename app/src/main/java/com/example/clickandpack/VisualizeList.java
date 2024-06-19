@@ -255,10 +255,12 @@ public class VisualizeList extends AppCompatActivity implements CompoundButton.O
         // Object detection with camera ended
         if ( requestCode == REQUEST_CODE_CHECK_LIST_WITH_CAMERA &&  data != null && data.getExtras() != null) {
             String textToShow = data.getExtras().getString(RESPONSE_ERROR_KEY_FROM_CAMERA_CHECKER);
+            // Log.d("pausa", "visualize list textToShow:" + textToShow + ". Result code:" + resultCode);
 
             if (!textToShow.equals("")) {
                 Toast.makeText(this, textToShow, Toast.LENGTH_LONG).show();
-                return;
+                if (resultCode == RESULT_CANCELED)
+                    return;
             }
             // Retrieve ids of detected objects
             ArrayList<Integer> detectedItemsIndexes = data.getExtras().getIntegerArrayList(RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER);
