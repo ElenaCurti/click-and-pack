@@ -44,6 +44,7 @@
     <string name="object_detector_unknown_object">Unknown object</string>
     <string name="object_detector_stopped">Object detection with camera was automatically stopped</string>
     <string name="object_detector_info">Click on a detected item to mark it as packed.</string>
+    <string name="object_detector_activity_restored">Detected items were restored</string>
 
     <string name="necessary_at_least_one_detectable_item">To check list with images or camera it\'s necessary to have at least one detectable item!</string>
     <string name="select_images">Select Picture</string>

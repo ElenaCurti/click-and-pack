@@ -11,6 +11,7 @@ import com.google.mlkit.vision.objects.DetectedObject
 import com.google.mlkit.vision.objects.ObjectDetection
 import com.google.mlkit.vision.objects.ObjectDetector
 import com.google.mlkit.vision.objects.custom.CustomObjectDetectorOptions
+import java.util.concurrent.ConcurrentSkipListSet
 
 /**
  * Class that handles the real-time camera object detection
@@ -57,13 +58,17 @@ class MyObjectDetectorCamera(viewBinding: ActivityCheckListWithCameraBinding) :
         objectDetector = ObjectDetection.getClient(customObjectDetectorOptions)
     }
 
+    fun cleanTheDetectedItems() {
+        objectBoundingBoxView.cleanDetectedItems()
+    }
+
     /**
      * Method that returns the ids of the detected and clicked items during the real-time detection
      * @return ids of the items
      */
-    fun getListOfDetectedAndClickedItems(): List<Int> {
-        // Return the list of clicked (packed) items' indexes
-        return objectBoundingBoxView.getClickedItemsIndexes().toList()
+    fun getListOfDetectedAndClickedItems(): ConcurrentSkipListSet<Int> {
+        // Return the list of clicked (packed) items' indexes and the restored one
+        return objectBoundingBoxView.getClickedItemsIndexes()
     }
 
     /**

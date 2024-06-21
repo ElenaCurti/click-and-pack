@@ -7,6 +7,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
@@ -16,6 +17,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.example.clickandpack.databinding.ActivityCheckListWithCameraBinding
 import object_detector.MyObjectDetectorCamera
+import java.util.concurrent.ConcurrentSkipListSet
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
@@ -38,8 +40,13 @@ class CheckListWithCamera : AppCompatActivity() {
     /**  Response in case of errors */
     private var errorResponse: String = ""
 
+    /** List of packed items saved when app is paused */
+    private var listOfDetectedItems : ConcurrentSkipListSet<Int> = ConcurrentSkipListSet()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("onpause", "oncreate")
+
         requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
 
         viewBinding = ActivityCheckListWithCameraBinding.inflate(layoutInflater)
@@ -93,8 +100,8 @@ class CheckListWithCamera : AppCompatActivity() {
         val i = Intent()
         if (::myObjDetector.isInitialized ) {
             //Log.d("pausa", "back to visualize is init")
-            val listOfDetectedItems: List<Int> = myObjDetector.getListOfDetectedAndClickedItems()
-
+            val list2 : ConcurrentSkipListSet<Int> = myObjDetector.getListOfDetectedAndClickedItems()
+            listOfDetectedItems.addAll(list2)
             val arrayList: ArrayList<Int> = ArrayList(listOfDetectedItems)
             i.putExtra(VisualizeList.RESPONSE_DETECTED_INDEXES_FROM_IMAGE_CHECKER, arrayList)
 
@@ -115,22 +122,38 @@ class CheckListWithCamera : AppCompatActivity() {
     }
 
     /**
-     * When app is paused during the live object detection, detection is stopped and app will
-     * return to "visualization list" view to show results
+     * When app is paused during the live object detection, I save the detected items until now
      */
     override fun onPause() {
-        if (::myObjDetector.isInitialized ) {
-            errorResponse = getString(R.string.object_detector_stopped)
-            backToVisualizeList()
-        }
         super.onPause()
+        if (::myObjDetector.isInitialized) {
+            listOfDetectedItems.addAll(myObjDetector.getListOfDetectedAndClickedItems())
+            Log.d("onpause", "onPause. size:" + listOfDetectedItems.size)
+        }
     }
 
-    /*override fun onDestroy() {
+    /**
+     * When app is resumed after being paused, I clean the detector to avoid interferences
+     */
+    override fun onResume() {
+        super.onResume()
+        Log.d("onpause", "on resume" )
+        if (::myObjDetector.isInitialized && listOfDetectedItems.isNotEmpty() )  {
+            myObjDetector.cleanTheDetectedItems()
+
+            Toast.makeText(this, R.string.object_detector_activity_restored, Toast.LENGTH_LONG).show()
+            Log.d("onpause", " on resume. size: " + listOfDetectedItems.size)
+
+        }
+
+    }
+
+
+    override fun onDestroy() {
         super.onDestroy()
         if (::cameraExecutor.isInitialized)
             cameraExecutor.shutdown()
-    }*/
+    }
 
     /**
      * Code that handle the camera's preview and calls the object detector algorithm on every frame.

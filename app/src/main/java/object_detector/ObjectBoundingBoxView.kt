@@ -76,6 +76,12 @@ class ObjectBoundingBoxView(context: Context, attrs: AttributeSet?) : View(conte
         return clickedItemsIndexes
     }
 
+    fun cleanDetectedItems() {
+        clickedTrackedIds = ConcurrentSkipListSet()
+        clickedItemsIndexes = ConcurrentSkipListSet()
+        setNoObjectFound()
+    }
+
     /**
      * Method that resets the bounding box
      */
