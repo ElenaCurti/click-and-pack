@@ -28,6 +28,8 @@ public class MyDatabaseInitiator {
 
 
     public static void resetAndPopulateDB(Context appContext, AppDatabase appDatabase){
+        if (appDatabase.itemDao().getAllDetectableItems().size() > 0 )
+            return;
 
         // DB reset
         appDatabase.listDao().deleteAllLists();
